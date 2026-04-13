@@ -1,0 +1,56 @@
+using RabbitMQ.Client;
+
+namespace OrderService2.Messaging;
+
+public class RabbitMqConnection
+{
+    private readonly IConnection _connection;
+    private readonly ILogger<RabbitMqConnection> _logger;
+
+    public RabbitMqConnection(IConfiguration configuration, ILogger<RabbitMqConnection> logger)
+    {
+        _logger = logger;
+        
+        var hostname = configuration["RabbitMq:HostName"] ?? "localhost";
+        var port = int.Parse(configuration["RabbitMq:Port"] ?? "5672");
+        var username = configuration["RabbitMq:UserName"] ?? "guest";
+        var password = configuration["RabbitMq:Password"] ?? "guest";
+
+        var factory = new ConnectionFactory()
+        {
+            HostName = hostname,
+            Port = port,
+            UserName = username,
+            Password = password,
+            AutomaticRecoveryEnabled = true,
+            NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+        };
+
+        try
+        {
+            _connection = factory.CreateConnection();
+            _logger.LogInformation("RabbitMQ connection established");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"RabbitMQ Host: {factory.HostName}");
+            Console.WriteLine($"RabbitMQ Port: {factory.Port}");
+            _logger.LogError(ex, $"Connecting to RabbitMQ at: {factory.HostName}:{factory.Port}");
+            throw;
+        }
+    }
+
+    public IModel CreateChannel()
+    {
+        var channel = _connection.CreateModel();
+        return channel;
+    }
+
+    public void Dispose()
+    {
+        _connection?.Dispose();
+    }
+}
+
+
+

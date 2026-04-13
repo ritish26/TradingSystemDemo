@@ -1,0 +1,22 @@
+services:
+    rabbitmq:
+      image: rabbitmq:3-management
+      container_name: rabbitmq
+      ports:
+        - "5672:5672"     # messaging
+        - "15672:15672"   # UI
+      environment:
+        RABBITMQ_DEFAULT_USER: guest
+        RABBITMQ_DEFAULT_PASS: guest
+        
+    orderservice:
+      build:
+        context: ./OrderService
+      depends_on:
+        - rabbitmq
+      environment:
+        - RabbitMQ__HostName=rabbitmq   
+        - RabbitMQ__Port=5672
+        - ASPNETCORE_URLS=http://+:80
+      ports:
+        - "5001:80"
