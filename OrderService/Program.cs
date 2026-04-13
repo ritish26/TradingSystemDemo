@@ -2,6 +2,8 @@ using OrderService2.Messaging;
 using OrderService2.Command;
 using OrderService2.Service;
 using OrderService2.BackgroundServices;
+using FluentValidation;
+using OrderService2.Request;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,12 @@ builder.Services.AddSingleton<OrderCreatedCommandHandler>();
 
 // Register Background Service
 builder.Services.AddHostedService<CommandConsumerService>();
+
+// Register AutoMapper
+builder.Services.AddAutoMapper(typeof(OrderMappingProfile));
+
+// Register Fluent Validation
+builder.Services.AddValidatorsFromAssemblyContaining<OrderRequestValidator>();
 
 // Add logging
 builder.Services.AddLogging(config =>

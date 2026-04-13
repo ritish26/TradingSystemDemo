@@ -1,5 +1,4 @@
 using System.Text.Json;
-using RabbitMQ.Client;
 using OrderService2.Command;
 
 namespace OrderService2.Messaging;
