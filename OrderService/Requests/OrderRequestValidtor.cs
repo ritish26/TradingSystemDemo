@@ -1,5 +1,6 @@
 using FluentValidation;
 using OrderService2.Model;
+using Shared.Enum;
 
 namespace OrderService2.Request;
 
@@ -20,7 +21,7 @@ public class OrderRequestValidator : AbstractValidator<OrderRequest>
 
         RuleFor(x => x.OrderType)
             .NotEmpty().WithMessage("OrderType is required")
-            .Must(x => x == "BUY" || x == "SELL")
+            .Must(x => x == OrderType.BUY || x == OrderType.SELL)
             .WithMessage("OrderType must be either 'BUY' or 'SELL'");
 
         RuleFor(x => x.Quantity)
