@@ -1,6 +1,0 @@
-@ExecutionService_HostAddress = http://localhost:5264
-
-GET {{ExecutionService_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
