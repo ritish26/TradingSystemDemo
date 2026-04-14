@@ -18,8 +18,9 @@ services:
 
   orderservice:
     build:
-      context: ./OrderService
-    image: trading-orderservice   # ✅ lowercase
+      context: .
+      dockerfile: ./OrderService/Dockerfile
+    image: trading-orderservice
     container_name: trading-orderservice
     depends_on:
       rabbitmq:
@@ -38,8 +39,9 @@ services:
 
   processingservice:
     build:
-      context: ./ProcessingService
-    image: trading-processingservice   # ✅ lowercase
+      context: .
+      dockerfile: ./ProcessingService/Dockerfile
+    image: trading-processingservice
     container_name: trading-processingservice
     depends_on:
       rabbitmq:

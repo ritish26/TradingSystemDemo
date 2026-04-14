@@ -1,9 +1,9 @@
-using OrderService2.Messaging;
 using OrderService2.Command;
 using OrderService2.Service;
 using OrderService2.Mediator;
 using FluentValidation;
 using OrderService2.Request;
+using Shared.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 

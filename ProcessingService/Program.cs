@@ -1,7 +1,7 @@
-using ProcessingService.Infrastructure;
 using ProcessingService.Service;
 using ProcessingService.Consumers;
 using ProcessingService.BackgroundService;
+using Shared.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 

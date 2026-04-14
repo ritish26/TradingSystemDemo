@@ -1,7 +1,7 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using ProcessingService.Infrastructure;
 using ProcessingService.Consumers;
+using Shared.Infrastructure;
 
 namespace ProcessingService.BackgroundService;
 

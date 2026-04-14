@@ -20,9 +20,8 @@ public class OrderRequestValidator : AbstractValidator<OrderRequest>
             .Matches(@"^[A-Z]+$").WithMessage("InstrumentSymbol must contain only uppercase letters");
 
         RuleFor(x => x.OrderType)
-            .NotEmpty().WithMessage("OrderType is required")
-            .Must(x => x == OrderType.BUY || x == OrderType.SELL)
-            .WithMessage("OrderType must be either 'BUY' or 'SELL'");
+            .NotNull().WithMessage("OrderType is required")
+            .IsInEnum().WithMessage("Invalid OrderType");
 
         RuleFor(x => x.Quantity)
             .GreaterThan(0).WithMessage("Quantity must be greater than 0")

@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
-namespace ProcessingService.Infrastructure;
+namespace Shared.Infrastructure;
 
 public class RabbitMqConnection
 {
