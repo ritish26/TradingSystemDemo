@@ -1,3 +1,5 @@
+using Shared.Enum;
+
 namespace OrderService2.Command;
 
 public class OrderCreatedCommand
