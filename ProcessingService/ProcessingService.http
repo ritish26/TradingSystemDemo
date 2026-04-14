@@ -1,0 +1,9 @@
+@ProcessingService_HostAddress = http://localhost:5002
+
+### Health Check Endpoint
+GET {{ProcessingService_HostAddress}}/api/health/status
+Accept: application/json
+
+###
+
+
