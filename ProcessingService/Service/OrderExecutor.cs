@@ -1,4 +1,4 @@
-using ProcessingService.Events;
+using Shared.Events;
 
 namespace ProcessingService.Service;
 

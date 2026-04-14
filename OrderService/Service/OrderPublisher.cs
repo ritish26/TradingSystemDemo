@@ -1,6 +1,6 @@
 using System.Text.Json;
 using RabbitMQ.Client;
-using OrderService2.Event;
+using Shared.Events;
 
 namespace OrderService2.Service;
 

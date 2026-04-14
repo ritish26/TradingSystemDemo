@@ -1,4 +1,4 @@
-namespace OrderService2.Event;
+namespace Shared.Events;
 
 public class OrderPlacedEvent
 {
@@ -11,4 +11,3 @@ public class OrderPlacedEvent
     public string? Status { get; set; } = "PLACED";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
-

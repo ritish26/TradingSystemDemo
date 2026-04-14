@@ -1,6 +1,6 @@
 using System.Text.Json;
-using ProcessingService.Events;
 using ProcessingService.Service;
+using Shared.Events;
 
 namespace ProcessingService.Consumers;
 
@@ -64,38 +64,11 @@ public class OrderPlacedConsumer
 
             _logger.LogInformation($"Order {orderEvent.OrderId} executed successfully with ExecutionId: {executionResult.ExecutionId}");
 
-            // Step 3: Publish OrderProcessedEvent (optional - for downstream services)
-            PublishOrderProcessedEvent(orderEvent, executionResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error consuming OrderPlacedEvent");
         }
     }
-
-    /// <summary>
-    /// Publishes an OrderProcessedEvent (optional - for auditing/downstream services)
-    /// </summary>
-    private void PublishOrderProcessedEvent(OrderPlacedEvent orderEvent, ExecutionResult executionResult)
-    {
-        try
-        {
-            var processedEvent = new OrderProcessedEvent
-            {
-                OrderId = orderEvent.OrderId,
-                ClientId = orderEvent.ClientId,
-                InstrumentSymbol = orderEvent.InstrumentSymbol,
-                Status = executionResult.IsSuccessful ? "EXECUTED" : "FAILED",
-                Message = executionResult.Message ?? executionResult.ErrorMessage,
-                ProcessedAt = DateTime.UtcNow
-            };
-
-            _logger.LogInformation($"Order {orderEvent.OrderId} processed with status: {processedEvent.Status}");
-            // In a real system, you would publish this event to RabbitMQ for auditing/logging
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error publishing OrderProcessedEvent");
-        }
-    }
+    
 }

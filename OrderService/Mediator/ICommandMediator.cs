@@ -1,5 +1,3 @@
-using OrderService2.Command;
-
 namespace OrderService2.Mediator;
 
 public interface ICommandMediator
