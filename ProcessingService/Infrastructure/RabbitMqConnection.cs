@@ -23,7 +23,11 @@ public class RabbitMqConnection
             UserName = username,
             Password = password,
             AutomaticRecoveryEnabled = true,
-            NetworkRecoveryInterval = TimeSpan.FromSeconds(10)
+            NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
+            RequestedHeartbeat = TimeSpan.FromSeconds(30), // Heartbeat every 30 seconds
+            RequestedChannelMax = 0, // Unlimited channels
+            DispatchConsumersAsync = true, // Important for async consumers
+            ConsumerDispatchConcurrency = 1 // Process messages sequentially
         };
 
         try

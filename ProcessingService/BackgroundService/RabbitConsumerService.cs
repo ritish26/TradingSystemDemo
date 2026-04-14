@@ -57,6 +57,10 @@ public class RabbitConsumerService : Microsoft.Extensions.Hosting.BackgroundServ
 
             _logger.LogInformation($"RabbitMQ queue '{OrderPlacedEventQueueName}' declared and listening");
 
+            // Set Quality of Service (QoS) - prefetch count of 1 message at a time
+            _channel.BasicQos(0, 1, false);
+            _logger.LogInformation("QoS set: prefetching 1 message at a time");
+
             // Create consumer
             var consumer = new AsyncEventingBasicConsumer(_channel);
 
@@ -73,7 +77,7 @@ public class RabbitConsumerService : Microsoft.Extensions.Hosting.BackgroundServ
                     // Process the message
                     await _orderPlacedConsumer.ConsumeAsync(message);
 
-                    // Acknowledge the message (remove from queue)
+                    // Acknowledge the message (remove from queue) after successful processing
                     _channel.BasicAck(ea.DeliveryTag, false);
 
                     _logger.LogInformation("Message processed and acknowledged");
@@ -86,10 +90,10 @@ public class RabbitConsumerService : Microsoft.Extensions.Hosting.BackgroundServ
                 }
             };
 
-            // Start consuming messages
+            // Start consuming messages with manual acknowledgement
             _channel.BasicConsume(
                 queue: OrderPlacedEventQueueName,
-                autoAck: false, // Manual acknowledgement
+                autoAck: false, // FIXED: Changed from true to false for manual acknowledgement
                 consumerTag: "order-placed-consumer",
                 noLocal: false,
                 exclusive: false,
