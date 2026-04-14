@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 
-namespace OrderService2.Messaging;
+namespace ProcessingService.Infrastructure;
 
 public class RabbitMqConnection
 {
@@ -49,6 +49,3 @@ public class RabbitMqConnection
         _connection?.Dispose();
     }
 }
-
-
-

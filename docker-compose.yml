@@ -1,22 +1,61 @@
 services:
-    rabbitmq:
-      image: rabbitmq:3-management
-      container_name: rabbitmq
-      ports:
-        - "5672:5672"     # messaging
-        - "15672:15672"   # UI
-      environment:
-        RABBITMQ_DEFAULT_USER: guest
-        RABBITMQ_DEFAULT_PASS: guest
-        
-    orderservice:
-      build:
-        context: ./OrderService
-      depends_on:
-        - rabbitmq
-      environment:
-        - RabbitMQ__HostName=rabbitmq   
-        - RabbitMQ__Port=5672
-        - ASPNETCORE_URLS=http://+:80
-      ports:
-        - "5001:80"
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: trading-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trading-network
+
+  orderservice:
+    build:
+      context: ./OrderService
+    image: trading-orderservice   # ✅ lowercase
+    container_name: trading-orderservice
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__UserName: guest
+      RabbitMQ__Password: guest
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5001:80"
+    networks:
+      - trading-network
+
+  processingservice:
+    build:
+      context: ./ProcessingService
+    image: trading-processingservice   # ✅ lowercase
+    container_name: trading-processingservice
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      RabbitMQ__HostName: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__UserName: guest
+      RabbitMQ__Password: guest
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5002:80"
+    networks:
+      - trading-network
+
+networks:
+  trading-network:
+    driver: bridge

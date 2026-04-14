@@ -3,7 +3,7 @@ using AutoMapper;
 using FluentValidation;
 using OrderService2.Model;
 using OrderService2.Command;
-using OrderService2.Messaging;
+using OrderService2.Mediator;
 
 namespace OrderService2.Controller;
 
@@ -11,18 +11,18 @@ namespace OrderService2.Controller;
 [Route("api/[controller]")]
 public class OrderController : ControllerBase
 {
-    private readonly CommandPublisher _commandPublisher;
+    private readonly ICommandMediator _mediator;
     private readonly IMapper _mapper;
     private readonly IValidator<OrderRequest> _orderRequestValidator;
     private readonly ILogger<OrderController> _logger;
 
     public OrderController(
-        CommandPublisher commandPublisher,
+        ICommandMediator mediator,
         IMapper mapper,
         IValidator<OrderRequest> orderRequestValidator,
         ILogger<OrderController> logger)
     {
-        _commandPublisher = commandPublisher;
+        _mediator = mediator;
         _mapper = mapper;
         _orderRequestValidator = orderRequestValidator;
         _logger = logger;
@@ -57,10 +57,10 @@ public class OrderController : ControllerBase
             // Map OrderRequest to OrderCreatedCommand using AutoMapper
             var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
 
-            // Publish command to queue
-            await _commandPublisher.PublishCommandAsync(command);
+            // Send command through mediator to handler
+            await _mediator.SendAsync(command);
 
-            _logger.LogInformation($"Order {command.OrderId} command published successfully");
+            _logger.LogInformation($"Order {command.OrderId} command processed successfully");
 
             return Accepted(new 
             { 

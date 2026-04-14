@@ -1,5 +1,6 @@
 using OrderService2.Event;
 using OrderService2.Service;
+using OrderService2.Messaging;
 
 namespace OrderService2.Command;
 

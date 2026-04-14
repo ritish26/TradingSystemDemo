@@ -1,7 +1,7 @@
 using OrderService2.Messaging;
 using OrderService2.Command;
 using OrderService2.Service;
-using OrderService2.BackgroundServices;
+using OrderService2.Mediator;
 using FluentValidation;
 using OrderService2.Request;
 
@@ -18,12 +18,11 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<RabbitMqConnection>();
 
 // Register Publishers and Handlers
-builder.Services.AddSingleton<CommandPublisher>();
 builder.Services.AddSingleton<OrderPublisher>();
 builder.Services.AddSingleton<OrderCreatedCommandHandler>();
 
-// Register Background Service
-builder.Services.AddHostedService<CommandConsumerService>();
+// Register Command Mediator
+builder.Services.AddSingleton<ICommandMediator, CommandMediator>();
 
 // Register AutoMapper
 builder.Services.AddAutoMapper(typeof(OrderMappingProfile));
