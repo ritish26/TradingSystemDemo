@@ -1,34 +1,19 @@
 using System.Text.Json;
-using RabbitMQ.Client;
 using Shared.Events;
+using Shared.Infrastructure;
 
 namespace OrderService2.Service;
 
 public class OrderPublisher
 {
-    private readonly IConnection _connection;
+    private readonly RabbitMqConnection _rabbitMqConnection;
     private readonly ILogger<OrderPublisher> _logger;
     private const string OrderPlacedEventQueueName = "order-placed-events";
 
-    public OrderPublisher(IConfiguration configuration, ILogger<OrderPublisher> logger)
+    public OrderPublisher(RabbitMqConnection rabbitMqConnection, ILogger<OrderPublisher> logger)
     {
+        _rabbitMqConnection = rabbitMqConnection;
         _logger = logger;
-        
-        var hostname = configuration["RabbitMq:HostName"] ?? "localhost";
-        var port = int.Parse(configuration["RabbitMq:Port"] ?? "5672");
-        var username = configuration["RabbitMq:UserName"] ?? "guest";
-        var password = configuration["RabbitMq:Password"] ?? "guest";
-
-        var factory = new ConnectionFactory()
-        {
-            HostName = hostname,
-            Port = port,
-            UserName = username,
-            Password = password,
-            AutomaticRecoveryEnabled = true
-        };
-
-        _connection = factory.CreateConnection();
     }
 
     public Task PublishOrderPlacedEventAsync(OrderPlacedEvent orderEvent)
@@ -37,7 +22,7 @@ public class OrderPublisher
         {
             try
             {
-                var channel = _connection.CreateModel();
+                var channel = _rabbitMqConnection.CreateChannel();
                 
                 channel.QueueDeclare(
                     queue: OrderPlacedEventQueueName,
