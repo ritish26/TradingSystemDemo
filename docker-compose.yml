@@ -1,4 +1,14 @@
 services:
+  seq:
+    image: datalust/seq:latest
+    container_name: trading-seq
+    ports:
+      - "5341:80"
+    environment:
+      ACCEPT_EULA: Y
+    networks:
+      - trading-network
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: trading-rabbitmq
@@ -51,6 +61,7 @@ services:
       RabbitMQ__Port: 5672
       RabbitMQ__UserName: guest
       RabbitMQ__Password: guest
+      Serilog__WriteTo__1__Args__serverUrl: http://seq:80
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
     ports:

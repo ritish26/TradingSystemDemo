@@ -2,8 +2,19 @@ using ProcessingService.Service;
 using ProcessingService.Consumers;
 using ProcessingService.BackgroundService;
 using Shared.Infrastructure;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", "ProcessingService");
+});
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
@@ -23,12 +34,6 @@ builder.Services.AddSingleton<OrderPlacedConsumer>();
 // Register Background Service for consuming RabbitMQ messages
 builder.Services.AddHostedService<RabbitConsumerService>();
 
-// Add logging
-builder.Services.AddLogging(config =>
-{
-    config.AddConsole();
-    config.SetMinimumLevel(LogLevel.Information);
-});
 
 var app = builder.Build();
 

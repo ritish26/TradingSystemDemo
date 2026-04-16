@@ -4,8 +4,19 @@ using OrderService2.Mediator;
 using FluentValidation;
 using OrderService2.Request;
 using Shared.Infrastructure;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Service", "OrderService");
+});
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
@@ -30,12 +41,6 @@ builder.Services.AddAutoMapper(typeof(OrderMappingProfile));
 // Register Fluent Validation
 builder.Services.AddValidatorsFromAssemblyContaining<OrderRequestValidator>();
 
-// Add logging
-builder.Services.AddLogging(config =>
-{
-    config.AddConsole();
-    config.SetMinimumLevel(LogLevel.Information);
-});
 
 var app = builder.Build();
 
