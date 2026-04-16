@@ -22,7 +22,7 @@ public class OrderCreatedCommandHandler
             
             var logContext = new Dictionary<string, object>
             {
-                { "RequestId", "Command Handler Execution Starts" },
+                { "Test log in command Handler", "Command Handler Execution Starts" },
             };
 
             using var logScope = _logger.BeginScope(logContext);
