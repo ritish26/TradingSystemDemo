@@ -1,3 +1,5 @@
+using Shared.Enum;
+
 namespace OrderService2.Command;
 
 public class OrderCreatedCommand
@@ -5,7 +7,7 @@ public class OrderCreatedCommand
     public string? OrderId { get; set; }
     public string? ClientId { get; set; }
     public string? InstrumentSymbol { get; set; }
-    public string? OrderType { get; set; } // BUY or SELL
+    public OrderType OrderType { get; set; } // BUY or SELL
     public decimal Quantity { get; set; }
     public decimal Price { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -1,3 +1,4 @@
+using Shared.Enum;
 using Shared.Events;
 
 namespace ProcessingService.Service;
@@ -76,7 +77,7 @@ public class OrderExecutor
             var totalCost = order.Quantity * executionPrice;
 
             // Business logic: For SELL orders, ensure client has positions
-            if (order.OrderType == "SELL")
+            if (order.OrderType == OrderType.SELL)
             {
                 var positionCheck = CheckClientPosition(order.ClientId, order.InstrumentSymbol, order.Quantity);
                 if (!positionCheck)
@@ -100,7 +101,7 @@ public class OrderExecutor
     /// <summary>
     /// Checks if market conditions are suitable for trading
     /// </summary>
-    private MarketHealthCheck CheckMarketConditions(string symbol)
+    private MarketHealthCheck CheckMarketConditions(string? symbol)
     {
         // Simulate market health check
         // In production, this would query real market data

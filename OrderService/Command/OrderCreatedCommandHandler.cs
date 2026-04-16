@@ -38,8 +38,7 @@ public class OrderCreatedCommandHandler
                 Status = "PLACED",
                 CreatedAt = command.CreatedAt
             };
-
-            // Publish OrderPlacedEvent to RiskService
+            
             await _orderPublisher.PublishOrderPlacedEventAsync(orderEvent);
 
             _logger.LogInformation($"Command handled successfully for Order {command.OrderId}");

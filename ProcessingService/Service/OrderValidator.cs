@@ -1,3 +1,4 @@
+using Shared.Enum;
 using Shared.Events;
 
 namespace ProcessingService.Service;
@@ -33,10 +34,7 @@ public class OrderValidator
             if (string.IsNullOrEmpty(order.InstrumentSymbol))
                 return ValidationResult.Failure("InstrumentSymbol is required");
 
-            if (string.IsNullOrEmpty(order.OrderType))
-                return ValidationResult.Failure("OrderType is required");
-
-            if (order.OrderType != "BUY" && order.OrderType != "SELL")
+            if (order.OrderType != OrderType.BUY && order.OrderType != OrderType.SELL)
                 return ValidationResult.Failure("OrderType must be either BUY or SELL");
 
             // Validate quantity
