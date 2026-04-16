@@ -19,6 +19,13 @@ public class OrderCreatedCommandHandler
         try
         {
             _logger.LogInformation($"Processing command for Order {command.OrderId}");
+            
+            var logContext = new Dictionary<string, object>
+            {
+                { "RequestId", "Command Handler Execution Starts" },
+            };
+
+            using var logScope = _logger.BeginScope(logContext);
 
             // Validate command
             if (string.IsNullOrEmpty(command.ClientId) || string.IsNullOrEmpty(command.InstrumentSymbol))

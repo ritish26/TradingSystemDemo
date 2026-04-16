@@ -19,7 +19,17 @@ public class HealthController : ControllerBase
     [HttpGet("status")]
     public IActionResult GetStatus()
     {
-        _logger.LogInformation("Health check requested");
+        var logContext = new Dictionary<string, object>
+        {
+            { "RequestId", Guid.NewGuid().ToString("N")[..8] },
+            { "CommandName", nameof(GetStatus) },
+            { "RequestType", "HealthCheck" },
+            { "ServiceVersion", "1.0.0" }
+        };
+
+        using var logScope = _logger.BeginScope(logContext);
+        _logger.LogInformation("Health check requested on Processing Service");
+        
         return Ok(new
         {
             service = "ProcessingService",

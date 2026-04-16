@@ -4,7 +4,7 @@ namespace OrderService2.Command;
 
 public class OrderCreatedCommand
 {
-    public string? OrderId { get; set; }
+    public string OrderId { get; set; }
     public string? ClientId { get; set; }
     public string? InstrumentSymbol { get; set; }
     public OrderType OrderType { get; set; } // BUY or SELL
