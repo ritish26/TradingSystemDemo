@@ -18,48 +18,47 @@ public class OrderPublisher
 
     public Task PublishOrderPlacedEventAsync(OrderPlacedEvent orderEvent)
     {
-        return Task.Run(() =>
+        try
         {
-            try
-            {
-                var channel = _rabbitMqConnection.CreateChannel();
-                
-                channel.QueueDeclare(
-                    queue: OrderPlacedEventQueueName,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null
-                );
+            var channel = _rabbitMqConnection.CreateChannel();
 
-                var message = JsonSerializer.Serialize(orderEvent);
-                var body = System.Text.Encoding.UTF8.GetBytes(message);
+            channel.QueueDeclare(
+                queue: OrderPlacedEventQueueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
 
-                var properties = channel.CreateBasicProperties();
-                properties.Persistent = true;
-                properties.ContentType = "application/json";
-                
-                // Add correlation ID for distributed tracing
-                properties.SetCorrelationId();
+            var message = JsonSerializer.Serialize(orderEvent);
+            var body = System.Text.Encoding.UTF8.GetBytes(message);
 
-                channel.BasicPublish(
-                    exchange: "",
-                    routingKey: OrderPlacedEventQueueName,
-                    mandatory: false,
-                    basicProperties: properties,
-                    body: body
-                );
+            var properties = channel.CreateBasicProperties();
+            properties.Persistent = true;
+            properties.ContentType = "application/json";
 
-                _logger.LogInformation($"OrderPlacedEvent published for Order {orderEvent.OrderId}");
-                channel.Close();
-                channel.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error publishing OrderPlacedEvent");
-                throw;
-            }
-        });
+            // Add correlation ID for distributed tracing
+            properties.SetCorrelationId();
+
+            channel.BasicPublish(
+                exchange: "",
+                routingKey: OrderPlacedEventQueueName,
+                mandatory: false,
+                basicProperties: properties,
+                body: body
+            );
+
+            _logger.LogInformation($"OrderPlacedEvent published for Order {orderEvent.OrderId}");
+            channel.Close();
+            channel.Dispose();
+        }
+        
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error publishing OrderPlacedEvent");
+            throw;
+        }
+        return Task.CompletedTask;
     }
 }
 
