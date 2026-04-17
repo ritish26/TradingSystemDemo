@@ -48,6 +48,9 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+// Add Correlation ID middleware for request tracking
+app.UseCorrelationId();
+
 app.UseRouting();
 app.MapControllers();
 

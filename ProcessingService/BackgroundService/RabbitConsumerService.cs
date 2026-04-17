@@ -2,6 +2,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ProcessingService.Consumers;
 using Shared.Infrastructure;
+using Serilog.Context;
 
 namespace ProcessingService.BackgroundService;
 
@@ -72,15 +73,23 @@ public class RabbitConsumerService : Microsoft.Extensions.Hosting.BackgroundServ
                     var body = ea.Body.ToArray();
                     var message = System.Text.Encoding.UTF8.GetString(body);
 
-                    _logger.LogInformation($"Message received from queue: {message}");
+                    // Extract correlation ID from message properties
+                    var correlationId = ea.BasicProperties?.GetCorrelationId() ?? Guid.NewGuid().ToString("N");
+                    CorrelationIdContext.SetCorrelationId(correlationId);
 
-                    // Process the message
-                    await _orderPlacedConsumer.ConsumeAsync(message);
+                    // Add correlation ID to Serilog LogContext for all subsequent logs in this scope
+                    using (LogContext.PushProperty("CorrelationId", correlationId))
+                    {
+                        _logger.LogInformation($"Message received from queue: {message}");
 
-                    // Acknowledge the message (remove from queue) after successful processing
-                    _channel.BasicAck(ea.DeliveryTag, false);
+                        // Process the message
+                        await _orderPlacedConsumer.ConsumeAsync(message);
 
-                    _logger.LogInformation("Message processed and acknowledged");
+                        // Acknowledge the message (remove from queue) after successful processing
+                        _channel.BasicAck(ea.DeliveryTag, false);
+
+                        _logger.LogInformation("Message processed and acknowledged");
+                    }
                 }
                 catch (Exception ex)
                 {

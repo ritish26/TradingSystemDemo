@@ -5,6 +5,7 @@ using OrderService2.Model;
 using OrderService2.Command;
 using OrderService2.Mediator;
 using Serilog.Context;
+using Shared.Infrastructure;
 
 namespace OrderService2.Controller;
 
@@ -37,14 +38,8 @@ public class OrderController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateOrder([FromBody] OrderRequest orderRequest)
     {
-        var logContext = new Dictionary<string, object>
-        {
-            { "RequestId", Guid.NewGuid().ToString("N")[..8] },
-            { "CommandName", nameof(CreateOrder) },
-            { "Timestamp", DateTime.UtcNow }
-        };
-
-        using var logScope = _logger.BeginScope(logContext);
+        // Correlation ID is automatically set by the CorrelationIdMiddleware
+        // and available in all logs via Serilog LogContext
         
         try
         {
@@ -99,14 +94,6 @@ public class OrderController : ControllerBase
     [HttpGet("health")]
     public IActionResult Health()
     {
-        var logContext = new Dictionary<string, object>
-        {
-            { "RequestId", Guid.NewGuid().ToString("N")[..8] },
-            { "CommandName", nameof(Health) },
-            { "RequestType", "HealthCheck" }
-        };
-
-        using var logScope = _logger.BeginScope(logContext);
         _logger.LogInformation("Order Service health check performed");
         return Ok(new { status = "Order Service is healthy" });
     }

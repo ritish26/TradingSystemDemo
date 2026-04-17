@@ -38,6 +38,9 @@ public class OrderPublisher
                 var properties = channel.CreateBasicProperties();
                 properties.Persistent = true;
                 properties.ContentType = "application/json";
+                
+                // Add correlation ID for distributed tracing
+                properties.SetCorrelationId();
 
                 channel.BasicPublish(
                     exchange: "",
