@@ -4,8 +4,6 @@ using FluentValidation;
 using OrderService2.Model;
 using OrderService2.Command;
 using OrderService2.Mediator;
-using Serilog.Context;
-using Shared.Infrastructure;
 
 namespace OrderService2.Controller;
 
