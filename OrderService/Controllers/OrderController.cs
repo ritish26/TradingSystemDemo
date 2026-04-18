@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using FluentValidation;
+using MediatR;
 using OrderService2.Model;
 using OrderService2.Command;
-using OrderService2.Mediator;
 
 namespace OrderService2.Controller;
 
@@ -11,13 +11,13 @@ namespace OrderService2.Controller;
 [Route("api/[controller]")]
 public class OrderController : ControllerBase
 {
-    private readonly ICommandMediator _mediator;
+    private readonly IMediator _mediator;
     private readonly IMapper _mapper;
     private readonly IValidator<OrderRequest> _orderRequestValidator;
     private readonly ILogger<OrderController> _logger;
 
     public OrderController(
-        ICommandMediator mediator,
+        IMediator mediator,
         IMapper mapper,
         IValidator<OrderRequest> orderRequestValidator,
         ILogger<OrderController> logger)
@@ -64,7 +64,7 @@ public class OrderController : ControllerBase
             var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
             
             // Send command through mediator to handler
-            await _mediator.SendAsync(command);
+            await _mediator.Send(command);
 
             _logger.LogInformation("Order command processed successfully");
 

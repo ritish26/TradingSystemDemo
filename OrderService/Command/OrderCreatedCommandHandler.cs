@@ -1,9 +1,10 @@
+using MediatR;
 using OrderService2.Service;
 using Shared.Events;
 
 namespace OrderService2.Command;
 
-public class OrderCreatedCommandHandler
+public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand>
 {
     private readonly OrderPublisher _orderPublisher;
     private readonly ILogger<OrderCreatedCommandHandler> _logger;
@@ -13,12 +14,12 @@ public class OrderCreatedCommandHandler
         _orderPublisher = orderPublisher;
         _logger = logger;
     }
-
-    public async Task HandleAsync(OrderCreatedCommand command)
+    
+    public async Task Handle(OrderCreatedCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation($"Processing command for Order {command.OrderId}");
+            _logger.LogInformation($"Processing command for Order {request.OrderId}");
             
             var logContext = new Dictionary<string, object>
             {
@@ -28,7 +29,7 @@ public class OrderCreatedCommandHandler
             using var logScope = _logger.BeginScope(logContext);
 
             // Validate command
-            if (string.IsNullOrEmpty(command.ClientId) || string.IsNullOrEmpty(command.InstrumentSymbol))
+            if (string.IsNullOrEmpty(request.ClientId) || string.IsNullOrEmpty(request.InstrumentSymbol))
             {
                 throw new ArgumentException("ClientId and InstrumentSymbol are required");
             }
@@ -36,23 +37,23 @@ public class OrderCreatedCommandHandler
             // Create OrderPlacedEvent from command
             var orderEvent = new OrderPlacedEvent
             {
-                OrderId = command.OrderId,
-                ClientId = command.ClientId,
-                InstrumentSymbol = command.InstrumentSymbol,
-                OrderType = command.OrderType,
-                Quantity = command.Quantity,
-                Price = command.Price,
+                OrderId = request.OrderId,
+                ClientId = request.ClientId,
+                InstrumentSymbol = request.InstrumentSymbol,
+                OrderType = request.OrderType,
+                Quantity = request.Quantity,
+                Price = request.Price,
                 Status = "PLACED",
-                CreatedAt = command.CreatedAt
+                CreatedAt = request.CreatedAt
             };
             
-            await _orderPublisher.PublishOrderPlacedEventAsync(orderEvent);
+             await _orderPublisher.PublishOrderPlacedEventAsync(orderEvent);
 
-            _logger.LogInformation($"Command handled successfully for Order {command.OrderId}");
+            _logger.LogInformation($"Command handled successfully for Order {request.OrderId}");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error handling command for Order {command.OrderId}");
+            _logger.LogError(ex, $"Error handling command for Order {request.OrderId}");
             throw;
         }
     }
