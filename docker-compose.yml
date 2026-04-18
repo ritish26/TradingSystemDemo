@@ -1,4 +1,18 @@
 services:
+  authservice:
+    build:
+      context: .
+      dockerfile: ./Authentication Service/Dockerfile
+    image: trading-authservice
+    container_name: trading-authservice
+    environment:
+      ASPNETCORE_URLS: http://+:80
+      ASPNETCORE_ENVIRONMENT: Development
+    ports:
+      - "5006:80"
+    networks:
+      - trading-network
+
   seq:
     image: datalust/seq:latest
     container_name: trading-seq
