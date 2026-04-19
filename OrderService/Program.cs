@@ -1,13 +1,12 @@
 using System.Text;
-using OrderService2.Command;
-using OrderService2.Service;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using OrderService2.AuthorizationRegistry;
-using OrderService2.Command.Mapper;
-using OrderService2.Services;
+using OrderService.AuthorizationRegistry;
+using OrderService.Command;
+using OrderService.Command.Mapper;
+using OrderService.Service;
 using Serilog;
 using Shared.Infrastructure.MediatRPipelines.Auth;
 using Shared.Infrastructure.MediatRPipelines.Validator;

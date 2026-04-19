@@ -1,5 +1,5 @@
 using FluentValidation;
-using OrderService2.Command;
+using OrderService.Command;
 
 public class OrderCreatedCommandValidator : AbstractValidator<OrderCreatedCommand>
 {

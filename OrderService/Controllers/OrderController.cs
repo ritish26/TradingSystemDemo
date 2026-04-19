@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using MediatR;
-using OrderService2.Command;
-using OrderService2.Models;
+using Microsoft.AspNetCore.Mvc;
+using OrderService.Command;
+using OrderService.Models;
 
-namespace OrderService2.Controller;
+namespace OrderService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

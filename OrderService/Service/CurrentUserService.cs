@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Shared.Infrastructure.MediatRPipelines.Auth;
 
-namespace OrderService2.Services;
+namespace OrderService.Service;
 
 public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {

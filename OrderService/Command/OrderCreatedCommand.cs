@@ -1,7 +1,7 @@
 using MediatR;
 using Shared.Enum;
 
-namespace OrderService2.Command;
+namespace OrderService.Command;
 
 public class OrderCreatedCommand : IRequest<Unit>
 {

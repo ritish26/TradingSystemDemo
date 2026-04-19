@@ -1,7 +1,7 @@
-using OrderService2.Command;
+using OrderService.Command;
 using Shared.Infrastructure.MediatRPipelines.Auth;
 
-namespace OrderService2.AuthorizationRegistry;
+namespace OrderService.AuthorizationRegistry;
 
 public class CommandAuthorizationRegistry : ICommandAuthorizationRegistry
 {

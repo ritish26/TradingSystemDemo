@@ -1,8 +1,8 @@
 using MediatR;
-using OrderService2.Service;
+using OrderService.Service;
 using Shared.Events;
 
-namespace OrderService2.Command;
+namespace OrderService.Command;
 
 public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, Unit>
 {
