@@ -1,6 +1,6 @@
 using RabbitMQ.Client;
 
-namespace Shared.Infrastructure;
+namespace Shared.Infrastructure.Helper;
 
 /// <summary>
 /// CorrelationIdExtensions - Helper methods for working with correlation IDs

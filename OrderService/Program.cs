@@ -5,6 +5,8 @@ using MediatR;
 using OrderService2.Command.Mapper;
 using Shared.Infrastructure;
 using Serilog;
+using Shared.Infrastructure.Middleware;
+using Shared.Infrastructure.RabbitMqConnection;
 
 var builder = WebApplication.CreateBuilder(args);
 

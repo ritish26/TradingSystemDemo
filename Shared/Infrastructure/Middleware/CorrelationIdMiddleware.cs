@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Serilog.Context;
+using Shared.Infrastructure.Helper;
 
-namespace Shared.Infrastructure;
+namespace Shared.Infrastructure.Middleware;
 
 /// <summary>
 /// CorrelationIdMiddleware - HTTP middleware that extracts or generates correlation IDs

@@ -3,6 +3,8 @@ using ProcessingService.Consumers;
 using ProcessingService.BackgroundService;
 using Shared.Infrastructure;
 using Serilog;
+using Shared.Infrastructure.Middleware;
+using Shared.Infrastructure.RabbitMqConnection;
 
 var builder = WebApplication.CreateBuilder(args);
 

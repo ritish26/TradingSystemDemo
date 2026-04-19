@@ -1,4 +1,4 @@
-namespace Shared.Infrastructure;
+namespace Shared.Infrastructure.Helper;
 
 /// <summary>
 /// CorrelationIdContext - Stores and retrieves the correlation ID for request tracking

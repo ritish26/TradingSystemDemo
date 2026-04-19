@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Shared.Events;
 using Shared.Infrastructure;
+using Shared.Infrastructure.Helper;
+using Shared.Infrastructure.RabbitMqConnection;
 
 namespace OrderService2.Service;
 

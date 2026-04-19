@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 
-namespace Shared.Infrastructure;
+namespace Shared.Infrastructure.RabbitMqConnection;
 
 public class RabbitMqConnection
 {

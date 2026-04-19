@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
-using FluentValidation;
 using MediatR;
 using OrderService2.Command;
 using OrderService2.Models;
@@ -35,7 +34,6 @@ public class OrderController : ControllerBase
     {
         // Correlation ID is automatically set by the CorrelationIdMiddleware
         // and available in all logs via Serilog LogContext
-        
         try
         {
             _logger.LogInformation("CreateOrder request initiated for symbol {Symbol}", orderRequest.OrderType);

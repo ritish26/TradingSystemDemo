@@ -3,6 +3,8 @@ using RabbitMQ.Client.Events;
 using ProcessingService.Consumers;
 using Shared.Infrastructure;
 using Serilog.Context;
+using Shared.Infrastructure.Helper;
+using Shared.Infrastructure.RabbitMqConnection;
 
 namespace ProcessingService.BackgroundService;
 
