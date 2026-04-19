@@ -18,15 +18,24 @@ public class TokenService : ITokenService
 
     public string GenerateToken(string username)
     {
-        var claims = new[]
+        List<Claim> claims =
+        [
+            new(ClaimTypes.Name, username),
+            new("permission", "trade:view")
+        ];
+
+        if (username == "admin")
         {
-            new Claim(ClaimTypes.Name, username),
-            new Claim(ClaimTypes.Role, "Admin"), 
-            new Claim("permission", "trade:create"),
-            new Claim("permission", "trade:view"),
-            new Claim("permission", "order:create"),
-            
-        };
+            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            claims.Add(new Claim("permission", "trade:create"));
+            claims.Add(new Claim("permission", "order:create"));
+        }
+        
+        else
+        {
+            claims.Add(new Claim(ClaimTypes.Role, "ReadAdmin"));
+            claims.Add(new Claim(ClaimTypes.Role, "User"));
+        }
 
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_jwtSettings.Secret));
