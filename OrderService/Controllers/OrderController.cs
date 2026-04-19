@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using FluentValidation;
 using MediatR;
-using OrderService2.Model;
 using OrderService2.Command;
+using OrderService2.Models;
 
 namespace OrderService2.Controller;
 
@@ -13,18 +13,15 @@ public class OrderController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
-    private readonly IValidator<OrderRequest> _orderRequestValidator;
     private readonly ILogger<OrderController> _logger;
 
     public OrderController(
         IMediator mediator,
         IMapper mapper,
-        IValidator<OrderRequest> orderRequestValidator,
         ILogger<OrderController> logger)
     {
         _mediator = mediator;
         _mapper = mapper;
-        _orderRequestValidator = orderRequestValidator;
         _logger = logger;
     }
 
@@ -42,23 +39,6 @@ public class OrderController : ControllerBase
         try
         {
             _logger.LogInformation("CreateOrder request initiated for symbol {Symbol}", orderRequest.OrderType);
-
-            // Validate request using Fluent Validation
-            var validationResult = await _orderRequestValidator.ValidateAsync(orderRequest);
-            
-            if (!validationResult.IsValid)
-            {
-                _logger.LogWarning("Order validation failed: {ValidationErrors}", 
-                    string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage)));
-                return BadRequest(new 
-                { 
-                    errors = validationResult.Errors.Select(e => new 
-                    { 
-                        field = e.PropertyName, 
-                        message = e.ErrorMessage 
-                    })
-                });
-            }
 
             // Map OrderRequest to OrderCreatedCommand using AutoMapper
             var command = _mapper.Map<OrderCreatedCommand>(orderRequest);

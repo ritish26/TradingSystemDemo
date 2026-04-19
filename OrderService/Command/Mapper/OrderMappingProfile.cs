@@ -1,8 +1,7 @@
 using AutoMapper;
-using OrderService2.Command;
-using OrderService2.Model;
+using OrderService2.Models;
 
-namespace OrderService2.Request;
+namespace OrderService2.Command.Mapper;
 
 public class OrderMappingProfile : Profile
 {

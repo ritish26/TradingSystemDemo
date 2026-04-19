@@ -1,7 +1,8 @@
 using OrderService2.Command;
 using OrderService2.Service;
 using FluentValidation;
-using OrderService2.Request;
+using MediatR;
+using OrderService2.Command.Mapper;
 using Shared.Infrastructure;
 using Serilog;
 
@@ -34,11 +35,16 @@ builder.Services.AddSingleton<OrderCreatedCommandHandler>();
 
 // Register AutoMapper
 builder.Services.AddAutoMapper(typeof(OrderMappingProfile));
+builder.Services.AddMediatR(cfg =>
 
-// Register Fluent Validation
-builder.Services.AddValidatorsFromAssemblyContaining<OrderRequestValidator>();
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<OrderCreatedCommandValidator>();
 
+// Pipeline behavior
+
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

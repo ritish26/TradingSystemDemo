@@ -1,6 +1,6 @@
 using Shared.Enum;
 
-namespace OrderService2.Model;
+namespace OrderService2.Models;
 
 public class OrderRequest
 {
