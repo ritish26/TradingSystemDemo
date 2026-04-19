@@ -21,7 +21,11 @@ public class TokenService : ITokenService
         var claims = new[]
         {
             new Claim(ClaimTypes.Name, username),
-            new Claim(ClaimTypes.Role, "Admin") // example
+            new Claim(ClaimTypes.Role, "Admin"), 
+            new Claim("permission", "trade:create"),
+            new Claim("permission", "trade:view"),
+            new Claim("permission", "order:create"),
+            
         };
 
         var key = new SymmetricSecurityKey(

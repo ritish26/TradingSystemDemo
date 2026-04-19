@@ -3,7 +3,7 @@ using Shared.Enum;
 
 namespace OrderService2.Command;
 
-public class OrderCreatedCommand : IRequest
+public class OrderCreatedCommand : IRequest<Unit>
 {
     public string? OrderId { get; set; }
     public string? ClientId { get; set; }

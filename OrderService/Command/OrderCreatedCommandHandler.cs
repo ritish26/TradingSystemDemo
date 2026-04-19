@@ -4,7 +4,7 @@ using Shared.Events;
 
 namespace OrderService2.Command;
 
-public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand>
+public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, Unit>
 {
     private readonly OrderPublisher _orderPublisher;
     private readonly ILogger<OrderCreatedCommandHandler> _logger;
@@ -15,7 +15,7 @@ public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand>
         _logger = logger;
     }
     
-    public async Task Handle(OrderCreatedCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(OrderCreatedCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -50,6 +50,7 @@ public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand>
              await _orderPublisher.PublishOrderPlacedEventAsync(orderEvent);
 
             _logger.LogInformation($"Command handled successfully for Order {request.OrderId}");
+            return Unit.Value;
         }
         catch (Exception ex)
         {

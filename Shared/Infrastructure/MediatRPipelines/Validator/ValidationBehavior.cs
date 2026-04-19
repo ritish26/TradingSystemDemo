@@ -1,6 +1,7 @@
-namespace Shared.Infrastructure;
 using FluentValidation;
 using MediatR;
+
+namespace Shared.Infrastructure.MediatRPipelines.Validator;
 
 public class ValidationBehavior<TRequest, TResponse> 
     : IPipelineBehavior<TRequest, TResponse>
