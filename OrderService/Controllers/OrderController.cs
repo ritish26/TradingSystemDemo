@@ -54,6 +54,7 @@ public class OrderController : ControllerBase
                 message = "Order command published for processing" 
             });
         }
+        
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating order");
@@ -70,7 +71,6 @@ public class OrderController : ControllerBase
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-
     [HttpGet("all")]
     public async Task<IActionResult> GetAllOrders([FromQuery] string? status)
     {
