@@ -37,7 +37,7 @@ public class RabbitMqConnection
             _connection = factory.CreateConnection();
             _logger.LogInformation("RabbitMQ connection established");
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             _logger.LogError(ex, $"Connecting to RabbitMQ at: {factory.HostName}:{factory.Port}");
             throw;

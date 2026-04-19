@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Command;
 using OrderService.Models;
+using OrderService.Query;
 
 namespace OrderService.Controllers;
 
@@ -62,6 +63,24 @@ public class OrderController : ControllerBase
                 message = ex.Message 
             });
         }
+    }
+    
+    /// <summary>
+    /// Get order details Status can be PENDING, EXECUTED, REJECTED
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllOrders([FromQuery] string? status)
+    {
+        var query = new GetOrdersQuery
+        {
+            Status = status
+        };
+
+        var result = await _mediator.Send(query);
+        return Ok(result);
     }
 
     /// <summary>

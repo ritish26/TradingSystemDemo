@@ -1,4 +1,5 @@
 using OrderService.Command;
+using OrderService.Query;
 using Shared.Infrastructure.MediatRPipelines.Auth;
 
 namespace OrderService.AuthorizationRegistry;
@@ -18,6 +19,12 @@ public class CommandAuthorizationRegistry : ICommandAuthorizationRegistry
         {
             Roles    = ["Admin"],
             Policies = ["CanCreateOrder"]
+        });
+        
+        Register<GetOrdersQuery>(new CommandAuthRule
+        {
+            Roles    = ["ReadAdmin"],
+            Policies = ["CanViewOrder"]
         });
 
         _logger.LogInformation("[Registry] Registered {Count} rules", _rules.Count);

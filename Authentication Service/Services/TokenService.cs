@@ -34,7 +34,7 @@ public class TokenService : ITokenService
         else
         {
             claims.Add(new Claim(ClaimTypes.Role, "ReadAdmin"));
-            claims.Add(new Claim(ClaimTypes.Role, "User"));
+            claims.Add(new Claim("permission", "order:read"));
         }
 
         var key = new SymmetricSecurityKey(

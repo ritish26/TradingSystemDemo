@@ -76,6 +76,8 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CanCreateOrder", policy =>
         policy.RequireClaim("permission", "order:create"));
+    options.AddPolicy("CanViewOrder", policy =>
+        policy.RequireClaim("permission", "order:read"));
 });
 
 var app = builder.Build();

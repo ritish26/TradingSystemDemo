@@ -10,6 +10,8 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CanCreateOrder", policy =>
         policy.RequireClaim("permission", "order:create"));
+    options.AddPolicy("CanViewOrder", policy =>
+        policy.RequireClaim("permission", "order:read"));
 });
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
