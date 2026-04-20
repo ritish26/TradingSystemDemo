@@ -1,4 +1,4 @@
-using System.Text;
+using System.Security.Cryptography;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -56,19 +56,29 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Authorization
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // JWT Auth — make sure this is configured
+var publicKeyPath = builder.Configuration["JwtSettings:PublicKeyPath"];
+
+var publicKeyPem = File.ReadAllText(
+    Path.Combine(AppContext.BaseDirectory, publicKeyPath!));
+
+var rsa = RSA.Create();
+
+rsa.ImportFromPem(publicKeyPem.ToCharArray());
+
+var rsaSecurityKey = new RsaSecurityKey(rsa);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer           = true,
-            ValidateAudience         = true,
-            ValidateLifetime         = true,
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer              = builder.Configuration["JwtSettings:Issuer"],
-            ValidAudience            = builder.Configuration["JwtSettings:Audience"],
-            IssuerSigningKey         = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+            IssuerSigningKey = rsaSecurityKey
         };
     });
 

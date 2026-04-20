@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using System.Security.Cryptography;
 using Authentication_Service.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -18,6 +18,7 @@ public class TokenService : ITokenService
 
     public string GenerateToken(string username)
     {
+        // 1. Claims 
         List<Claim> claims =
         [
             new(ClaimTypes.Name, username),
@@ -30,18 +31,30 @@ public class TokenService : ITokenService
             claims.Add(new Claim("permission", "trade:create"));
             claims.Add(new Claim("permission", "order:create"));
         }
-        
         else
         {
             claims.Add(new Claim(ClaimTypes.Role, "ReadAdmin"));
             claims.Add(new Claim("permission", "order:read"));
         }
 
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+        // 2. Load PRIVATE key from PEM file
+        var privateKeyPem = File.ReadAllText(
+            Path.Combine(Directory.GetCurrentDirectory(), _jwtSettings.PrivateKeyPath));
 
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        using var rsa = RSA.Create();
+        rsa.ImportFromPem(privateKeyPem.ToCharArray());
 
+        var securityKey = new RsaSecurityKey(rsa)
+        {
+            KeyId = "key-1" // optional but recommended (for rotation)
+        };
+
+        var creds = new SigningCredentials(
+            securityKey,
+            SecurityAlgorithms.RsaSha256 
+        );
+
+        // 3. Create token (same as before)
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
@@ -50,6 +63,7 @@ public class TokenService : ITokenService
             signingCredentials: creds
         );
 
+        // 4. Return JWT
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
