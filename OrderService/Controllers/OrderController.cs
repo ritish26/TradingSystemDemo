@@ -46,11 +46,11 @@ public class OrderController : ControllerBase
         _logger.LogInformation("Order command processed successfully");
         
         return Accepted(new 
-         { 
-             orderId = command.OrderId, 
-             status = "PENDING", 
-             message = "Order command published for processing" 
-          });
+        { 
+            orderId = command.OrderId, 
+            status = "PENDING", 
+            message = "Order command published for processing" 
+        });
 }
     
     
