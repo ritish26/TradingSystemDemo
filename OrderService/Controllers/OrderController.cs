@@ -35,36 +35,24 @@ public class OrderController : ControllerBase
     {
         // Correlation ID is automatically set by the CorrelationIdMiddleware
         // and available in all logs via Serilog LogContext
-        try
-        {
-            _logger.LogInformation("CreateOrder request initiated for symbol {Symbol}", orderRequest.OrderType);
+        _logger.LogInformation("CreateOrder request initiated for symbol {Symbol}", orderRequest.OrderType);
 
-            // Map OrderRequest to OrderCreatedCommand using AutoMapper
-            var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
+        // Map OrderRequest to OrderCreatedCommand using AutoMapper
+        var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
             
-            // Send command through mediator to handler
-            await _mediator.Send(command);
+        // Send command through mediator to handler
+        await _mediator.Send(command);
 
-            _logger.LogInformation("Order command processed successfully");
-
-            return Accepted(new 
-            { 
-                orderId = command.OrderId, 
-                status = "PENDING", 
-                message = "Order command published for processing" 
-            });
-        }
+        _logger.LogInformation("Order command processed successfully");
         
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating order");
-            return StatusCode(500, new 
-            { 
-                error = "Internal server error", 
-                message = ex.Message 
-            });
-        }
-    }
+        return Accepted(new 
+         { 
+             orderId = command.OrderId, 
+             status = "PENDING", 
+             message = "Order command published for processing" 
+          });
+}
+    
     
     /// <summary>
     /// Get order details Status can be PENDING, EXECUTED, REJECTED

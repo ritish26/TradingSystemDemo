@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-
-
+using Shared.Infrastructure.CustomException;
 using Shared.Infrastructure.MediatRPipelines.Auth;
 
 public class AuthorizationBehavior<TRequest, TResponse>
@@ -33,13 +32,13 @@ public class AuthorizationBehavior<TRequest, TResponse>
             return await next();
 
         if (!_currentUser.IsAuthenticated)
-            throw new UnauthorizedAccessException("User is not authenticated.");
+            throw new UnauthorizedAccessException();
 
         if (rule.Roles?.Length > 0)
         {
             var hasRole = rule.Roles.Any(r => _currentUser.IsInRole(r));
             if (!hasRole)
-                throw new UnauthorizedAccessException("Insufficient role.");
+                throw new ForbiddenException();
         }
 
         if (rule.Policies?.Length > 0)
@@ -50,7 +49,7 @@ public class AuthorizationBehavior<TRequest, TResponse>
                     .AuthorizeAsync(_currentUser.Principal, policy);
 
                 if (!result.Succeeded)
-                    throw new UnauthorizedAccessException($"Policy '{policy}' failed.");
+                    throw new ForbiddenException();
             }
         }
 

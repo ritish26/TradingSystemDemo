@@ -22,14 +22,13 @@ public class TokenService : ITokenService
         List<Claim> claims =
         [
             new(ClaimTypes.Name, username),
-            new("permission", "trade:view")
         ];
 
         if (username == "admin")
         {
             claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-            claims.Add(new Claim("permission", "trade:create"));
             claims.Add(new Claim("permission", "order:create"));
+            claims.Add(new Claim("permission", "order:read"));
         }
         else
         {
