@@ -8,6 +8,7 @@ using OrderService.Command;
 using OrderService.Command.Mapper;
 using OrderService.Service;
 using Serilog;
+using Shared.Infrastructure.Helper;
 using Shared.Infrastructure.MediatRPipelines.Auth;
 using Shared.Infrastructure.MediatRPipelines.Validator;
 using Shared.Infrastructure.Middleware;
@@ -29,6 +30,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>(); 
+
 
 builder.Services.AddMediatR(cfg =>
 {
@@ -92,6 +95,8 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<IdempotencyKeyGeneratorMiddleware>();
+app.UseMiddleware<IdempotencyMiddleware>();            
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();
