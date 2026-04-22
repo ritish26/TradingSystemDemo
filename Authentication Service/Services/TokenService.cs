@@ -40,7 +40,7 @@ public class TokenService : ITokenService
         var privateKeyPem = File.ReadAllText(
             Path.Combine(Directory.GetCurrentDirectory(), _jwtSettings.PrivateKeyPath));
 
-        using var rsa = RSA.Create();
+        var rsa = RSA.Create();
         rsa.ImportFromPem(privateKeyPem.ToCharArray());
 
         var securityKey = new RsaSecurityKey(rsa)
