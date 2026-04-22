@@ -15,7 +15,7 @@ public static class CorrelationIdExtensions
     {
         var correlationId = CorrelationIdContext.GetCorrelationId();
         properties.Headers ??= new Dictionary<string, object>();
-        properties.Headers[CorrelationIdContext.CorrelationIdHeaderName] = 
+        properties.Headers[Constant.Constant.CorrelationIdHeaderName] = 
             System.Text.Encoding.UTF8.GetBytes(correlationId);
     }
 
@@ -25,7 +25,7 @@ public static class CorrelationIdExtensions
     public static string GetCorrelationId(this IBasicProperties properties)
     {
         if (properties?.Headers != null && 
-            properties.Headers.TryGetValue(CorrelationIdContext.CorrelationIdHeaderName, out var headerValue))
+            properties.Headers.TryGetValue(Constant.Constant.CorrelationIdHeaderName, out var headerValue))
         {
             if (headerValue is byte[] bytes)
             {

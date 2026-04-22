@@ -49,9 +49,4 @@ public class RabbitMqConnection
         var channel = _connection.CreateModel();
         return channel;
     }
-
-    public void Dispose()
-    {
-        _connection?.Dispose();
-    }
 }

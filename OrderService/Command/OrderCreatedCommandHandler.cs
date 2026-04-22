@@ -1,14 +1,16 @@
 using MediatR;
 using OrderService.Service;
+using Shared.Constant;
 using Shared.Events;
 
 namespace OrderService.Command;
 
 public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, Unit>
-{
-    private readonly OrderPublisher _orderPublisher;
+{ 
     private readonly ILogger<OrderCreatedCommandHandler> _logger;
-
+    
+    private readonly OrderPublisher _orderPublisher;
+    
     public OrderCreatedCommandHandler(OrderPublisher orderPublisher, ILogger<OrderCreatedCommandHandler> logger)
     {
         _orderPublisher = orderPublisher;
@@ -17,13 +19,17 @@ public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, U
     
     public async Task<Unit> Handle(OrderCreatedCommand request, CancellationToken cancellationToken)
     {
+        ArgumentException.ThrowIfNullOrEmpty(request.OrderType.ToString(), nameof(request.OrderType));
+        ArgumentException.ThrowIfNullOrEmpty(request.ClientId);
+        ArgumentException.ThrowIfNullOrEmpty(request.InstrumentSymbol);
+        
         try
         {
             _logger.LogInformation($"Processing command for Order {request.OrderId}");
             
             var logContext = new Dictionary<string, object>
             {
-                { "Test log in command Handler", "Command Handler Execution Starts" },
+                { "OrderId", request.OrderId! },
             };
 
             using var logScope = _logger.BeginScope(logContext);
@@ -43,7 +49,7 @@ public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, U
                 OrderType = request.OrderType,
                 Quantity = request.Quantity,
                 Price = request.Price,
-                Status = "PLACED",
+                Status = Constant.Placed,
                 CreatedAt = request.CreatedAt
             };
             

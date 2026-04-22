@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Shared.Constant;
 using Shared.Events;
 using Shared.Infrastructure.Helper;
 using Shared.Infrastructure.RabbitMqConnection;
@@ -7,10 +8,9 @@ namespace OrderService.Service;
 
 public class OrderPublisher
 {
-    private readonly RabbitMqConnection _rabbitMqConnection;
     private readonly ILogger<OrderPublisher> _logger;
-    private const string OrderPlacedEventQueueName = "order-placed-events";
-
+    
+    private readonly RabbitMqConnection _rabbitMqConnection;
     public OrderPublisher(RabbitMqConnection rabbitMqConnection, ILogger<OrderPublisher> logger)
     {
         _rabbitMqConnection = rabbitMqConnection;
@@ -24,7 +24,7 @@ public class OrderPublisher
             var channel = _rabbitMqConnection.CreateChannel();
 
             channel.QueueDeclare(
-                queue: OrderPlacedEventQueueName,
+                queue: Constant.OrderPlacedEventQueueName,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -43,7 +43,7 @@ public class OrderPublisher
 
             channel.BasicPublish(
                 exchange: "",
-                routingKey: OrderPlacedEventQueueName,
+                routingKey: Constant.OrderPlacedEventQueueName,
                 mandatory: false,
                 basicProperties: properties,
                 body: body
@@ -53,7 +53,6 @@ public class OrderPublisher
             channel.Close();
             channel.Dispose();
         }
-        
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error publishing OrderPlacedEvent");

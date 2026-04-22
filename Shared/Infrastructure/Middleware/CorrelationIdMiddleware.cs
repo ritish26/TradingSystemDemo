@@ -36,9 +36,9 @@ public class CorrelationIdMiddleware
             // Add correlation ID to response headers
             context.Response.OnStarting(() =>
             {
-                if (!context.Response.Headers.ContainsKey(CorrelationIdContext.CorrelationIdHeaderName))
+                if (!context.Response.Headers.ContainsKey(Constant.Constant.CorrelationIdHeaderName))
                 {
-                    context.Response.Headers.Append(CorrelationIdContext.CorrelationIdHeaderName, correlationId);
+                    context.Response.Headers.Append(Constant.Constant.CorrelationIdHeaderName, correlationId);
                 }
                 return Task.CompletedTask;
             });
@@ -61,7 +61,7 @@ public class CorrelationIdMiddleware
     /// </summary>
     private string ExtractCorrelationId(IHeaderDictionary headers)
     {
-        if (headers.TryGetValue(CorrelationIdContext.CorrelationIdHeaderName, out var correlationId))
+        if (headers.TryGetValue(Constant.Constant.CorrelationIdHeaderName, out var correlationId))
         {
             return correlationId.ToString();
         }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrderService.Command;
 using OrderService.Models;
 using OrderService.Query;
+using Shared.Constant;
 
 namespace OrderService.Controllers;
 
@@ -34,7 +35,7 @@ public class OrderController : ControllerBase
     public async Task<IActionResult> CreateOrder([FromBody] OrderRequest orderRequest)
     {
         // Correlation ID is automatically set by the CorrelationIdMiddleware
-        // and available in all logs via Serilog LogContext
+        // And available in all logs via Serilog LogContext
         _logger.LogInformation("CreateOrder request initiated for symbol {Symbol}", orderRequest.OrderType);
 
         // Map OrderRequest to OrderCreatedCommand using AutoMapper
@@ -44,14 +45,10 @@ public class OrderController : ControllerBase
         await _mediator.Send(command);
 
         _logger.LogInformation("Order command processed successfully");
-        
-        return Accepted(new 
-        { 
-            orderId = command.OrderId, 
-            status = "PENDING", 
-            message = "Order command published for processing" 
-        });
-}
+
+        var response = new OrderResponse(command.OrderId, Constant.Pending, "Order command published for processing");
+        return Accepted(response);
+    }
     
     
     /// <summary>

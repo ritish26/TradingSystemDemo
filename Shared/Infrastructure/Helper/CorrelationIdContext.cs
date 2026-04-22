@@ -7,8 +7,6 @@ namespace Shared.Infrastructure.Helper;
 public static class CorrelationIdContext
 {
     private static readonly AsyncLocal<string> _correlationId = new();
-    
-    public const string CorrelationIdHeaderName = "X-Correlation-Id";
 
     /// <summary>
     /// Gets the current correlation ID for this async context
