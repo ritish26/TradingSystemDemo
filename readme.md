@@ -360,3 +360,144 @@ View:
 - **Processing Service:** Consumes events and executes business logic
 
 **Technologies:** .NET 8.0, RabbitMQ, AutoMapper, Fluent Validation, CQRS Pattern 
+
+
+---- JIRA STORY ---
+# Implement Outbox Pattern with PostgreSQL for Reliable Order Event Publishing
+
+| Field      | Value                                                              |
+|------------|--------------------------------------------------------------------|
+| **Type**   | Story                                                              |
+| **Priority** | High                                                             |
+| **Labels** | `backend` `microservices` `reliability` `trading-system`          |
+| **Epic**   | Order Processing Resilience                                        |
+
+---
+
+## User Story
+
+> As a **trading system operator**,
+> I want **order events to be reliably published to RabbitMQ even when the broker is temporarily unavailable**,
+> so that **no trade orders are silently lost due to infrastructure failures**.
+
+---
+
+## Background
+
+Currently the Order Service publishes `OrderPlacedEvent` directly to RabbitMQ inside `OrderCreatedCommandHandler`. This creates a dual-write problem — if the service crashes between saving the order and publishing the event, the event is lost with no recovery mechanism. For a wealth management platform this is unacceptable.
+
+The Outbox Pattern resolves this by writing the event to the same database transaction as the order, then having a relay service publish it asynchronously.
+
+### Current (broken) flow
+
+```
+OrderCreatedCommandHandler
+  → INSERT INTO Orders        ← save succeeds
+  → Publish to RabbitMQ      ← crash here = event lost forever
+```
+
+### Target flow
+
+```
+OrderCreatedCommandHandler
+  → BEGIN TRANSACTION
+      INSERT INTO Orders
+      INSERT INTO OutboxMessages (Status = Pending)
+  → COMMIT
+
+OutboxRelayService (background)
+  → Poll OutboxMessages WHERE Status = Pending
+  → Publish to RabbitMQ
+  → UPDATE OutboxMessages SET Status = Processed
+  → UPDATE Orders SET Status = OrderPlaced
+
+Processing Service
+  → Consume OrderPlacedEvent
+  → Validate + Execute trade
+  → Publish OrderProcessedEvent
+
+Order Service (new consumer)
+  → Consume OrderProcessedEvent
+  → UPDATE Orders SET Status = Executed
+```
+
+---
+
+## Database Schema
+
+### Orders
+
+| Column         | Type               | Notes                        |
+|----------------|--------------------|------------------------------|
+| `OrderId`      | uniqueidentifier   | PK                           |
+| `ClientId`     | nvarchar(50)       |                              |
+| `InstrumentId` | nvarchar(20)       |                              |
+| `OrderType`    | nvarchar(10)       | BUY / SELL                   |
+| `Quantity`     | int                |                              |
+| `Price`        | decimal(18,4)      |                              |
+| `CreatedAt`    | datetime2          |                              |
+| `Status`       | nvarchar(20)       | See status lifecycle below   |
+
+**Status lifecycle:** `Pending` → `OrderPlaced` → `Executed` / `PublishFailed` / `ExecutionFailed`
+
+### OutboxMessages
+
+| Column         | Type               | Notes                        |
+|----------------|--------------------|------------------------------|
+| `Id`           | uniqueidentifier   | PK                           |
+| `OrderId`      | uniqueidentifier   | FK → Orders.OrderId          |
+| `EventType`    | nvarchar(100)      | e.g. `OrderPlacedEvent`      |
+| `Payload`      | nvarchar(max)      | JSON-serialized event        |
+| `CreatedAt`    | datetime2          |                              |
+| `ProcessedAt`  | datetime2?         | Null until published         |
+| `RetryCount`   | int                | Max 3 before marking Failed  |
+| `Status`       | nvarchar(20)       | Pending / Processed / Failed |
+
+> Both tables live in the same PostgreSQL database and are always written in a single atomic transaction.
+
+---
+
+## Acceptance Criteria
+
+- [ ] PostgreSQL is added to `docker-compose.yml` and both `Orders` and `OutboxMessages` tables are created via EF Core migrations
+- [ ] `OrderCreatedCommandHandler` writes to both tables in a **single atomic transaction** — RabbitMQ is not touched at this point
+- [ ] `OutboxRelayService` polls `OutboxMessages WHERE Status = Pending`, publishes to RabbitMQ, marks rows `Processed`, and updates `Orders.Status = OrderPlaced`
+- [ ] Relay retries up to **3 times with exponential backoff** before marking a row `Failed`
+- [ ] Processing Service publishes `OrderProcessedEvent` after successful trade execution
+- [ ] Order Service consumes `OrderProcessedEvent` and updates `Orders.Status = Executed`
+- [ ] `Processed` outbox rows are **not deleted** — retained for audit trail
+- [ ] All services resolve PostgreSQL and RabbitMQ via Docker Compose service names (no hardcoded IPs)
+- [ ] Unit tests cover the atomic transaction logic and relay retry behaviour
+
+---
+
+## Tasks
+
+- [ ] Add PostgreSQL service to `docker-compose.yml`
+- [ ] Install `Npgsql.EntityFrameworkCore.PostgreSQL` NuGet package in Order Service
+- [ ] Create `Order` and `OutboxMessage` EF Core entities and `DbContext`
+- [ ] Run and verify EF Core migrations
+- [ ] Refactor `OrderCreatedCommandHandler` to use atomic transaction (remove direct RabbitMQ publish)
+- [ ] Implement `OutboxRelayService` in `BackgroundServices/`
+- [ ] Add `OrderProcessedEvent` publishing to `ProcessingService/Services/OrderExecutor.cs`
+- [ ] Add `OrderStatusConsumerService` to Order Service to consume `OrderProcessedEvent`
+- [ ] Update `docker-compose.yml` with `depends_on: db` in both microservices
+- [ ] Write unit tests
+- [ ] Update `readme.md` with new architecture and setup steps
+
+---
+
+## Out of Scope
+
+- Archiving old `Processed` outbox rows *(separate story)*
+- Prometheus / ELK monitoring *(separate story)*
+- Circuit breakers *(separate story)*
+
+---
+
+## Definition of Done
+
+- `docker-compose up -d` starts RabbitMQ, PostgreSQL, Order Service, and Processing Service with no manual steps
+- Placing an order via `POST /api/orders` results in a row in both `Orders` and `OutboxMessages`
+- Killing RabbitMQ mid-flight and restarting it causes pending outbox messages to be published automatically on recovery
+- `Orders.Status` progresses end to end: `Pending` → `OrderPlaced` → `Executed`
