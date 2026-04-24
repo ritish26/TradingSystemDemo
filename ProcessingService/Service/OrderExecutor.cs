@@ -104,7 +104,7 @@ public class OrderExecutor
     private MarketHealthCheck CheckMarketConditions(string? symbol)
     {
         // Simulate market health check
-        // In production, this would query real market data
+        // In production, this would query real market Data
         var isHealthy = !string.IsNullOrEmpty(symbol);
         return new MarketHealthCheck 
         { 
@@ -133,7 +133,7 @@ public class OrderExecutor
     private decimal GetCurrentPrice(string symbol, decimal requestedPrice)
     {
         // Simulate getting current market price
-        // In production, this would query real market data
+        // In production, this would query real market Data
         // For now, use a slight variation from requested price
         var variance = (decimal)(new Random().NextDouble() * 0.02 - 0.01); // -1% to +1%
         return requestedPrice * (1 + variance);
