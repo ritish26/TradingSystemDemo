@@ -2,10 +2,13 @@ using System.Security.Cryptography;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OrderService.AuthorizationRegistry;
-using OrderService.Command;
 using OrderService.Command.Mapper;
+using OrderService.Infrastructure.Data;
+using OrderService.Infrastructure.Repositories;
+using OrderService.OutboxProcessor;
 using OrderService.Service;
 using Serilog;
 using Shared.Infrastructure.Helper;
@@ -26,12 +29,20 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .Enrich.WithProperty("Service", "OrderService");
 });
 
+// configure postgres connection string
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>(); 
-
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<OrderPublisher>();
+builder.Services.AddScoped<OutboxProcessor>();
+builder.Services.AddHostedService<OutboxBackgroundService>();
 
 builder.Services.AddMediatR(cfg =>
 {

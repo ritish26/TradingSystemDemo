@@ -40,6 +40,7 @@ public class OrderController : ControllerBase
 
         // Map OrderRequest to OrderCreatedCommand using AutoMapper
         var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
+        command.OrderId = "ORDER-" + Guid.NewGuid();
             
         // Send command through mediator to handler
         await _mediator.Send(command);
