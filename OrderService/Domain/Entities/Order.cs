@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using Shared.Enum;
+using Shared.Domain.Enum;
 
 namespace OrderService.Domain.Entities;
 
@@ -8,7 +8,7 @@ public class Order
 {
     public string OrderId { get; set; }
     public string? ClientId { get; set; }
-    public string? InstrumentId { get; set; }
+    public required string InstrumentId { get; set; }
     public OrderType OrderType { get; set; }
     public int Quantity { get; set; }
     public decimal Price { get; set; }

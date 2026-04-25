@@ -326,3 +326,40 @@ info: OrderService2.BackgroundServices.CommandConsumerService[0]
 - [ ] Add monitoring and alerting
 - [ ] Setup log aggregation
 
+
+
+
+----
+
+
+ProcessingService/
+│
+├── 📁 Domain/                          # Enterprise Business Rules
+│   └── Interfaces/
+│       └── IOrderExecutor.cs           # ✅ extract interface from OrderExecutor
+│       └── IOrderValidator.cs          # ✅ extract interface from OrderValidator
+│
+├── 📁 Application/                     # Application Business Rules
+│   ├── UseCases/
+│   │   └── ProcessOrder/
+│   │       └── ProcessOrderHandler.cs  # ✅ move logic from OrderExecutor here
+│   └── Interfaces/
+│       └── IMessageConsumer.cs         # ✅ abstract RabbitMQ consumer
+│
+├── 📁 Infrastructure/                  # Frameworks & Drivers
+│   ├── Messaging/
+│   │   ├── RabbitMqConsumerService.cs  # ✅ move from BackgroundService/
+│   │   └── OrderPlacedConsumer.cs      # ✅ move from Consumers/
+│   ├── Services/
+│   │   ├── OrderExecutor.cs            # ✅ move from Service/
+│   │   └── OrderValidator.cs           # ✅ move from Service/
+│   └── Security/
+│       └── public.pem                  # ✅ move from Keys/
+│
+├── 📁 API/                             # Interface Adapters
+│   └── Controllers/
+│       └── HealthController.cs         # ✅ stays here
+│
+├── appsettings.json                    # ✅ stays at root
+├── appsettings.Development.json        # ✅ stays at root
+└── Dockerfile                          # ✅ stays at root

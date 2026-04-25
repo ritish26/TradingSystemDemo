@@ -1,10 +1,8 @@
-using ProcessingService.Service;
-using ProcessingService.Consumers;
-using ProcessingService.BackgroundService;
-using Shared.Infrastructure;
+using ProcessingService.Infrastructure.Messaging;
+using ProcessingService.Infrasturcture.Services;
 using Serilog;
-using Shared.Infrastructure.Middleware;
-using Shared.Infrastructure.RabbitMqConnection;
+using Shared.API.Middleware;
+using Shared.Infrastructure.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +13,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
-        .Enrich.WithProperty("Service", "ProcessingService");
+        .Enrich.WithProperty("Services", "ProcessingService");
 });
 
 // Add services to the container
@@ -33,7 +31,7 @@ builder.Services.AddSingleton<OrderValidator>();
 builder.Services.AddSingleton<OrderExecutor>();
 builder.Services.AddSingleton<OrderPlacedConsumer>();
 
-// Register Background Service for consuming RabbitMQ messages
+// Register Background Services for consuming RabbitMQ messages
 builder.Services.AddHostedService<RabbitConsumerService>();
 
 

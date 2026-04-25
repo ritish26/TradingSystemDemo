@@ -4,18 +4,20 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OrderService.Application.Command;
+using OrderService.Application.Command.Mapper;
+using OrderService.Application.Interfaces;
 using OrderService.AuthorizationRegistry;
-using OrderService.Command.Mapper;
 using OrderService.Infrastructure.Data;
 using OrderService.Infrastructure.Repositories;
-using OrderService.OutboxProcessor;
-using OrderService.Service;
+using OrderService.Infrastructure.Service;
+using OrderService.Outbox;
 using Serilog;
-using Shared.Infrastructure.Helper;
-using Shared.Infrastructure.MediatRPipelines.Auth;
-using Shared.Infrastructure.MediatRPipelines.Validator;
-using Shared.Infrastructure.Middleware;
-using Shared.Infrastructure.RabbitMqConnection;
+using Shared.API.Middleware;
+using Shared.Application.Interfaces;
+using Shared.Application.Pipelines.Validator;
+using Shared.Infrastructure.Idempotency;
+using Shared.Infrastructure.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +28,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
-        .Enrich.WithProperty("Service", "OrderService");
+        .Enrich.WithProperty("Services", "OrderService");
 });
 
 // configure postgres connection string
@@ -43,6 +45,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<OrderPublisher>();
 builder.Services.AddScoped<OutboxProcessor>();
 builder.Services.AddHostedService<OutboxBackgroundService>();
+builder.Services.AddScoped<IOrderService, OrderService.Infrastructure.Service.OrderService>();
 
 builder.Services.AddMediatR(cfg =>
 {
