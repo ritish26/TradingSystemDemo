@@ -1,7 +1,7 @@
 using Shared.Domain.Enum;
 using Shared.Domain.Events;
 
-namespace ProcessingService.Infrasturcture.Services;
+namespace ProcessingService.Infrastructure.Services;
 
 /// <summary>
 /// OrderExecutor - Executes orders in the trading system

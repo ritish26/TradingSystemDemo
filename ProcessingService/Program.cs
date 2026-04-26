@@ -1,4 +1,5 @@
 using ProcessingService.Infrastructure.Messaging;
+using ProcessingService.Infrastructure.Services;
 using ProcessingService.Infrasturcture.Services;
 using Serilog;
 using Shared.API.Middleware;

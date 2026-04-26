@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ProcessingService.Infrastructure.Services;
 using ProcessingService.Infrasturcture.Services;
 using Shared.Domain.Events;
 
