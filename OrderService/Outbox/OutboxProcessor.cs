@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using OrderService.Infrastructure.Data;
+using OrderService.Infrastructure.Persistence;
 using OrderService.Infrastructure.Service;
 using Shared.Domain.Events;
 

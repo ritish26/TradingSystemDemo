@@ -8,7 +8,7 @@ using OrderService.Application.Command;
 using OrderService.Application.Command.Mapper;
 using OrderService.Application.Interfaces;
 using OrderService.AuthorizationRegistry;
-using OrderService.Infrastructure.Data;
+using OrderService.Infrastructure.Persistence;
 using OrderService.Infrastructure.Repositories;
 using OrderService.Infrastructure.Service;
 using OrderService.Outbox;
@@ -18,6 +18,7 @@ using Shared.Application.Interfaces;
 using Shared.Application.Pipelines.Validator;
 using Shared.Infrastructure.Idempotency;
 using Shared.Infrastructure.Messaging;
+using Shared.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,15 +33,15 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 // configure postgres connection string
-
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!));
+builder.Services.AddDatabaseInitialization(builder.Configuration);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>(); 
+// builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>(); 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<OrderPublisher>();
 builder.Services.AddScoped<OutboxProcessor>();
@@ -69,8 +70,8 @@ builder.Services.AddAutoMapper(typeof(OrderMappingProfile));
 builder.Services.AddValidatorsFromAssemblyContaining<OrderCreatedCommandValidator>();
 
 // Pipeline behaviors — order matters, auth runs first
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+// builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
+// builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // JWT Auth — make sure this is configured
 var publicKeyPath = builder.Configuration["JwtSettings:PublicKeyPath"];
@@ -108,9 +109,14 @@ builder.Services.AddAuthorization(options =>
 });
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
+    await dbInitializer.InitializeAsync();
+}
 
-app.UseMiddleware<IdempotencyKeyGeneratorMiddleware>();
-app.UseMiddleware<IdempotencyMiddleware>();            
+// app.UseMiddleware<IdempotencyKeyGeneratorMiddleware>();
+// app.UseMiddleware<IdempotencyMiddleware>();            
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseSwagger();
 app.UseSwaggerUI();

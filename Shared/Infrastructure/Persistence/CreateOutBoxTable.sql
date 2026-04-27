@@ -1,8 +1,8 @@
 -- =========================
 -- OutboxMessages Table
 -- =========================
-CREATE TABLE "OutboxMessage" (
-                                 "Id" TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS "OutboxMessages" (
+                                 "Id" UUID PRIMARY KEY,
                                  "OrderId" TEXT NULL,
                                  "EventType" TEXT NOT NULL,
                                  "Payload" TEXT NOT NULL,

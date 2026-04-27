@@ -5,21 +5,32 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <PackageReference Include="FluentValidation" Version="11.7.0" />
         <PackageReference Include="MediatR" Version="14.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.11"/>
+        <PackageReference Include="Npgsql" Version="8.0.0" />
         <PackageReference Include="Serilog" Version="3.1.1" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="RabbitMQ.Client" Version="6.8.1"/>
         <PackageReference Include="System.Text.Json" Version="4.7.2"/>
     </ItemGroup>
-    
+
+    <!-- separate ItemGroup for SQL files -->
     <ItemGroup>
-      <Folder Include="API\" />
-      <Folder Include="Application\Pipelines\" />
-      <Folder Include="Domain\" />
+        <None Include="Infrastructure\Persistence\CreateOrdersTable.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Include="Infrastructure\Persistence\CreateOutBoxTable.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="API\" />
+        <Folder Include="Application\Pipelines\" />
+        <Folder Include="Domain\" />
     </ItemGroup>
 
 </Project>
