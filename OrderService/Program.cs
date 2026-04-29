@@ -6,6 +6,8 @@ using OrderService.Infrastructure.Extensions;
 using OrderService.Infrastructure.Persistence;
 using Serilog;
 using Shared.API.Middleware;
+using Shared.Application.Interfaces;
+using Shared.Infrastructure.Extensions;
 using Shared.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,13 +25,16 @@ builder.Host.UseSerilog((context, services, configuration) =>
 // configure postgres connection string
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")!));
-builder.Services.AddDatabaseInitialization(builder.Configuration);
+builder.Services.AddDatabaseInitialization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 // builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
+
+// Register shared infrastructure (Configuration, Database, Messaging, ExceptionHandling)
+builder.Services.AddSharedInfrastructure();
 
 // Facade: Register all Order Service dependencies using extension method
 builder.Services.AddOrderServiceDependencies();
@@ -76,8 +81,8 @@ builder.Services.AddAuthorization(options =>
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
-    var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
-    await dbInitializer.InitializeAsync();
+    var database = scope.ServiceProvider.GetRequiredService<IDatabase>();
+    await database.InitializeAsync();
 }
 
 // app.UseMiddleware<IdempotencyKeyGeneratorMiddleware>();

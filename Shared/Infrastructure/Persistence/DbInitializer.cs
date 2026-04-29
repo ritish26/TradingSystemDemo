@@ -1,20 +1,19 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
+using Shared.Application.Interfaces;
 
 namespace Shared.Infrastructure.Persistence;
 
-public class DbInitializer
+// Implements IDatabase for PostgreSQL. Handles schema initialization via SQL scripts.
+// Uses abstraction (IConfigurationProvider) to decouple from configuration source.
+public class PostgreSqlDatabase : IDatabase
 {
     private readonly string _connectionString;
-    private readonly ILogger<DbInitializer> _logger;
+    private readonly ILogger<PostgreSqlDatabase> _logger;
 
-    public DbInitializer(IConfiguration configuration, ILogger<DbInitializer> logger)
+    public PostgreSqlDatabase(IConfigurationProvider configProvider, ILogger<PostgreSqlDatabase> logger)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection")
-                            ?? throw new InvalidOperationException("DefaultConnection not found");
-
+        _connectionString = configProvider.GetConnectionString("DefaultConnection");
         _logger = logger;
     }
 
@@ -26,28 +25,12 @@ public class DbInitializer
 
             await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
-        
-            var scriptPath = Path.Combine(
-                AppContext.BaseDirectory,
-                "Infrastructure",
-                "Persistence",
-                "CreateOrdersTable.sql"
-            );
 
-            var outboxPath = Path.Combine(
-                AppContext.BaseDirectory,
-                "Infrastructure",
-                "Persistence",
-                "CreateOutBoxTable.sql"
-            );
-        
-            var script = await File.ReadAllTextAsync(scriptPath); 
-            await using var command = new NpgsqlCommand(script, connection);
-            await command.ExecuteNonQueryAsync();  
-        
-            var script1 = await File.ReadAllTextAsync(outboxPath); 
-            await using var command1 = new NpgsqlCommand(script1, connection);
-            await command1.ExecuteNonQueryAsync();  
+            var ordersTableScript = LoadScript("CreateOrdersTable.sql");
+            await ExecuteScriptAsync(connection, ordersTableScript);
+
+            var outboxTableScript = LoadScript("CreateOutBoxTable.sql");
+            await ExecuteScriptAsync(connection, outboxTableScript);
 
             _logger.LogInformation("Database initialized.");
         }
@@ -56,5 +39,23 @@ public class DbInitializer
             _logger.LogError(ex, "DB init failed");
             throw;
         }
+    }
+
+    private static string LoadScript(string scriptName)
+    {
+        var scriptPath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Infrastructure",
+            "Persistence",
+            scriptName
+        );
+
+        return File.ReadAllText(scriptPath);
+    }
+
+    private static async Task ExecuteScriptAsync(NpgsqlConnection connection, string script)
+    {
+        await using var command = new NpgsqlCommand(script, connection);
+        await command.ExecuteNonQueryAsync();
     }
 }

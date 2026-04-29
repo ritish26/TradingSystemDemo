@@ -1,9 +1,7 @@
-using ProcessingService.Infrastructure.Messaging;
-using ProcessingService.Infrastructure.Services;
-using ProcessingService.Infrasturcture.Services;
+using ProcessingService.Infrastructure.Extensions;
 using Serilog;
 using Shared.API.Middleware;
-using Shared.Infrastructure.Messaging;
+using Shared.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,16 +22,11 @@ builder.Services.AddSwaggerGen();
 // Add controllers
 builder.Services.AddControllers();
 
-// Register RabbitMQ Connection
-builder.Services.AddSingleton<RabbitMqConnection>();
+// Register shared infrastructure (Configuration, Database, Messaging, ExceptionHandling)
+builder.Services.AddSharedInfrastructure();
 
-// Register Services
-builder.Services.AddSingleton<OrderValidator>();
-builder.Services.AddSingleton<OrderExecutor>();
-builder.Services.AddSingleton<OrderPlacedConsumer>();
-
-// Register Background Services for consuming RabbitMQ messages
-builder.Services.AddHostedService<RabbitConsumerService>();
+// Facade: Register all Processing Service dependencies
+builder.Services.AddProcessingServiceDependencies();
 
 
 var app = builder.Build();

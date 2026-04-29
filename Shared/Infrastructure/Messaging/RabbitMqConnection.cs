@@ -1,22 +1,24 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using Shared.Application.Interfaces;
 
 namespace Shared.Infrastructure.Messaging;
 
-public class RabbitMqConnection
+// Implements IMessagingConnection for RabbitMQ. Encapsulates RabbitMQ-specific connection logic.
+// Follows DIP - consumers depend on abstraction, allowing easy swap to other messaging systems.
+public class RabbitMqConnection : IMessagingConnection, IDisposable
 {
     private readonly IConnection _connection;
     private readonly ILogger<RabbitMqConnection> _logger;
 
-    public RabbitMqConnection(IConfiguration configuration, ILogger<RabbitMqConnection> logger)
+    public RabbitMqConnection(IConfigurationProvider configProvider, ILogger<RabbitMqConnection> logger)
     {
         _logger = logger;
-        
-        var hostname = configuration["RabbitMq:HostName"] ?? "localhost";
-        var port = int.Parse(configuration["RabbitMq:Port"] ?? "5672");
-        var username = configuration["RabbitMq:UserName"] ?? "guest";
-        var password = configuration["RabbitMq:Password"] ?? "guest";
+
+        var hostname = configProvider.GetValue("RabbitMq:HostName", "localhost");
+        var port = configProvider.GetValue("RabbitMq:Port", 5672);
+        var username = configProvider.GetValue("RabbitMq:UserName", "guest");
+        var password = configProvider.GetValue("RabbitMq:Password", "guest");
 
         var factory = new ConnectionFactory()
         {
@@ -26,10 +28,10 @@ public class RabbitMqConnection
             Password = password,
             AutomaticRecoveryEnabled = true,
             NetworkRecoveryInterval = TimeSpan.FromSeconds(10),
-            RequestedHeartbeat = TimeSpan.FromSeconds(30), // Heartbeat every 30 seconds
-            RequestedChannelMax = 0, // Unlimited channels
-            DispatchConsumersAsync = true, // Important for async consumers
-            ConsumerDispatchConcurrency = 1 // Process messages sequentially
+            RequestedHeartbeat = TimeSpan.FromSeconds(30),
+            RequestedChannelMax = 0,
+            DispatchConsumersAsync = true,
+            ConsumerDispatchConcurrency = 1
         };
 
         try
@@ -37,16 +39,25 @@ public class RabbitMqConnection
             _connection = factory.CreateConnection();
             _logger.LogInformation("RabbitMQ connection established");
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
-            _logger.LogError(ex, $"Connecting to RabbitMQ at: {factory.HostName}:{factory.Port}");
+            _logger.LogError(ex, "Connecting to RabbitMQ at: {HostName}:{Port}", hostname, port);
             throw;
         }
     }
 
     public IModel CreateChannel()
     {
-        var channel = _connection.CreateModel();
-        return channel;
+        return _connection.CreateModel();
+    }
+
+    public void Close()
+    {
+        _connection?.Close();
+    }
+
+    public void Dispose()
+    {
+        _connection?.Dispose();
     }
 }

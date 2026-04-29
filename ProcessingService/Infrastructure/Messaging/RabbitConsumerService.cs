@@ -14,22 +14,22 @@ namespace ProcessingService.Infrastructure.Messaging;
 public class RabbitConsumerService : BackgroundService
 {
     private readonly RabbitMqConnection _rabbitMqConnection;
-    private readonly OrderPlacedConsumer _orderPlacedConsumer;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RabbitConsumerService> _logger;
     private IModel _channel;
     private const string OrderPlacedEventQueueName = "order-placed-events";
 
     public RabbitConsumerService(
         RabbitMqConnection rabbitMqConnection,
-        OrderPlacedConsumer orderPlacedConsumer,
+        IServiceScopeFactory scopeFactory,
         ILogger<RabbitConsumerService> logger)
     {
         _rabbitMqConnection = rabbitMqConnection;
-        _orderPlacedConsumer = orderPlacedConsumer;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
-    /// <summary>
+    /// <summary
     /// StartAsync - Called when the service starts
     /// </summary>
     public override Task StartAsync(CancellationToken cancellationToken)
@@ -83,8 +83,13 @@ public class RabbitConsumerService : BackgroundService
                     {
                         _logger.LogInformation($"Message received from queue: {message}");
 
-                        // Process the message
-                        await _orderPlacedConsumer.ConsumeAsync(message);
+                        // Create a new scope for each message to resolve scoped dependencies
+                        using (var scope = _scopeFactory.CreateScope())
+                        {
+                            var consumer = scope.ServiceProvider.GetRequiredService<OrderPlacedEventConsumer>();
+                            // Process the message
+                            await consumer.ConsumeAsync(message);
+                        }
 
                         // Acknowledge the message (remove from queue) after successful processing
                         _channel.BasicAck(ea.DeliveryTag, false);
