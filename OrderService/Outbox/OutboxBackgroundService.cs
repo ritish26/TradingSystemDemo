@@ -19,7 +19,7 @@ public class OutboxBackgroundService : BackgroundService
 
             await processor.ProcessAsync();
 
-            await Task.Delay(5000, stoppingToken); // every 5 sec
+            await Task.Delay(5000, stoppingToken);
         }
     }
 }

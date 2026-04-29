@@ -32,6 +32,6 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, List<OrderD
         var orders = await _orderService.GetOrderAsync(request.Status!);
         var result = _mapper.Map<List<OrderDto>>(orders);
         
-        return await Task.FromResult(result) ;
+        return result ;
     }
 }

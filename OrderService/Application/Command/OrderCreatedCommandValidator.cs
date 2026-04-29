@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace OrderService.Application.Command;
 
-public abstract class OrderCreatedCommandValidator : AbstractValidator<OrderCreatedCommand>
+public class OrderCreatedCommandValidator : AbstractValidator<OrderCreatedCommand>
 {
     public OrderCreatedCommandValidator()
     {

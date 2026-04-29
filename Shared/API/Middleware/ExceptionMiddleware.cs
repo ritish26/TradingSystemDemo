@@ -1,15 +1,19 @@
 using Microsoft.AspNetCore.Http;
-using Shared.Domain.Exceptions;
+using Shared.Infrastructure.API.ExceptionHandling;
 
 namespace Shared.API.Middleware;
 
+// Middleware that delegates exception handling to ExceptionHandler using strategy pattern.
+// Decouples specific exception handling from middleware - easier to test and extend.
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ExceptionHandler _exceptionHandler;
 
-    public ExceptionMiddleware(RequestDelegate next)
+    public ExceptionMiddleware(RequestDelegate next, ExceptionHandler exceptionHandler)
     {
         _next = next;
+        _exceptionHandler = exceptionHandler;
     }
 
     public async Task Invoke(HttpContext context)
@@ -18,15 +22,9 @@ public class ExceptionMiddleware
         {
             await _next(context);
         }
-        catch (UnauthorizedAccessException)
+        catch (Exception ex)
         {
-            context.Response.Clear(); 
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-        }
-        catch (ForbiddenException)
-        {
-            context.Response.Clear(); 
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            _exceptionHandler.Handle(ex, context);
         }
     }
 }

@@ -1,12 +1,12 @@
-using Authentication_Service.Application.Interfaces;
-using Authentication_Service.Configuration;
-using Authentication_Service.Infrastructure.Services;
+using Authentication_Service.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
+
+builder.Services.AddAuthenticationServices(builder.Configuration);
 
 builder.Services.AddAuthorization(options =>
 {
@@ -15,12 +15,6 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CanViewOrder", policy =>
         policy.RequireClaim("permission", "order:read"));
 });
-
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection("JwtSettings"));
-
-builder.Services.AddControllers();
-builder.Services.AddSingleton<ITokenService, TokenService>();
 
 var app = builder.Build();
 app.UseSwagger();

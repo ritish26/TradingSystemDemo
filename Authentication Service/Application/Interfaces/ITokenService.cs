@@ -1,3 +1,5 @@
+using Authentication_Service.Application.Models;
+
 namespace Authentication_Service.Application.Interfaces;
 
 /// <summary>
@@ -6,5 +8,5 @@ namespace Authentication_Service.Application.Interfaces;
 /// </summary>
 public interface ITokenService
 {
-    string GenerateToken(string username);
+    string GenerateToken(AuthenticatedUser user);
 }
