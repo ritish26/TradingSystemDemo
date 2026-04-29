@@ -8,24 +8,34 @@ namespace Authentication_Service.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
+    private readonly IUserAuthenticationService _authService;
     private readonly ITokenService _tokenService;
-    public AuthController(ITokenService tokenService)
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(
+        IUserAuthenticationService authService,
+        ITokenService tokenService,
+        ILogger<AuthController> logger)
     {
+        _authService = authService;
         _tokenService = tokenService;
+        _logger = logger;
     }
 
-    /// <summary>
-    /// Login endpoint for user authentication. Validates user credentials and returns a JWT token if successful.
-    /// Write now we are giving token for two users: user and admin 
-    /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
     [HttpPost("login")]
     public IActionResult Login(LoginRequest request)
     {
-        // TODO: hardcoded user validation for demonstration purposes
-        var token = _tokenService.GenerateToken(request.Username);
-        
+        var user = _authService.Authenticate(request.Username, request.Password);
+
+        if (user is null)
+        {
+            _logger.LogWarning("Authentication failed for username: {Username}", request.Username);
+            return Unauthorized(new { message = "Invalid credentials." });
+        }
+
+        var token = _tokenService.GenerateToken(user);
+        _logger.LogInformation("User authenticated successfully: {Username}", request.Username);
+
         return Ok(new AuthResponse { Token = token });
     }
 }
