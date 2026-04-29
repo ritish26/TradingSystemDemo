@@ -1,23 +1,11 @@
 using System.Security.Cryptography;
-using FluentValidation;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using OrderService.Application.Command;
-using OrderService.Application.Command.Mapper;
-using OrderService.Application.Interfaces;
-using OrderService.AuthorizationRegistry;
+using OrderService.Infrastructure.Extensions;
 using OrderService.Infrastructure.Persistence;
-using OrderService.Infrastructure.Repositories;
-using OrderService.Infrastructure.Service;
-using OrderService.Outbox;
 using Serilog;
 using Shared.API.Middleware;
-using Shared.Application.Interfaces;
-using Shared.Application.Pipelines.Validator;
-using Shared.Infrastructure.Idempotency;
-using Shared.Infrastructure.Messaging;
 using Shared.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -41,33 +29,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
-// builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>(); 
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<OrderPublisher>();
-builder.Services.AddScoped<OutboxProcessor>();
-builder.Services.AddHostedService<OutboxBackgroundService>();
-builder.Services.AddScoped<IOrderService, OrderService.Infrastructure.Service.OrderService>();
+// builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
 
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssemblyContaining<OrderCreatedCommandHandler>();
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-});
-
-// RabbitMQ
-builder.Services.AddSingleton<RabbitMqConnection>();
-builder.Services.AddSingleton<OrderPublisher>();
-
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-// Registry
-builder.Services.AddSingleton<ICommandAuthorizationRegistry, CommandAuthorizationRegistry>();
-
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(OrderMappingProfile));
-
-// FluentValidation
-builder.Services.AddValidatorsFromAssemblyContaining<OrderCreatedCommandValidator>();
+// Facade: Register all Order Service dependencies using extension method
+builder.Services.AddOrderServiceDependencies();
 
 // Pipeline behaviors — order matters, auth runs first
 // builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));

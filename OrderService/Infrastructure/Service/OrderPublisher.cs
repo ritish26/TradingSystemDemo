@@ -1,4 +1,5 @@
 using System.Text.Json;
+using OrderService.Application.Interfaces;
 using Shared.Domain.Constants;
 using Shared.Domain.Events;
 using Shared.Infrastructure.Extensions;
@@ -6,12 +7,16 @@ using Shared.Infrastructure.Messaging;
 
 namespace OrderService.Infrastructure.Service;
 
-public class OrderPublisher
+/// <summary>
+/// RabbitMQ implementation of event publishing.
+/// Implements IEventPublisher (Strategy Pattern) for flexible publisher swapping.
+/// </summary>
+public class RabbitMqEventPublisher : IEventPublisher
 {
-    private readonly ILogger<OrderPublisher> _logger;
-    
+    private readonly ILogger<RabbitMqEventPublisher> _logger;
     private readonly RabbitMqConnection _rabbitMqConnection;
-    public OrderPublisher(RabbitMqConnection rabbitMqConnection, ILogger<OrderPublisher> logger)
+
+    public RabbitMqEventPublisher(RabbitMqConnection rabbitMqConnection, ILogger<RabbitMqEventPublisher> logger)
     {
         _rabbitMqConnection = rabbitMqConnection;
         _logger = logger;
