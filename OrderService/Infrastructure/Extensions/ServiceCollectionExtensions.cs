@@ -1,9 +1,9 @@
 using FluentValidation;
+using OrderService.Application.Authorization;
 using OrderService.Application.Command;
 using OrderService.Application.Command.Mapper;
 using OrderService.Application.Factories;
 using OrderService.Application.Interfaces;
-using OrderService.AuthorizationRegistry;
 using OrderService.Infrastructure.Repositories;
 using OrderService.Infrastructure.Service;
 using OrderService.Outbox;

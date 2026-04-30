@@ -3,7 +3,7 @@ using OrderService.Application.Queries;
 using Shared.Application.Interfaces;
 using Shared.Application.Pipelines.Auth;
 
-namespace OrderService.AuthorizationRegistry;
+namespace OrderService.Application.Authorization;
 
 public class CommandAuthorizationRegistry : ICommandAuthorizationRegistry
 {

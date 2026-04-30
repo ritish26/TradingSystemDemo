@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Shared.Application.Interfaces;
 using Shared.Domain.Exceptions;
 
+namespace Shared.Application.Pipelines.Auth;
+
 public class AuthorizationBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
@@ -32,10 +34,6 @@ public class AuthorizationBehavior<TRequest, TResponse>
     {
         var requestType = typeof(TRequest);
 
-        var claims = _currentUser.Principal?.Claims
-            ?.Select(c => $"{c.Type}:{c.Value}")
-            .ToList();
-
         var rule = _registry.GetRule(requestType);
 
         if (rule == null)
@@ -55,7 +53,6 @@ public class AuthorizationBehavior<TRequest, TResponse>
             _logger.LogWarning("No role requirement");
         }
 
-        // 🔍 Authentication check
         if (!_currentUser.IsAuthenticated)
         {
             _logger.LogError("AUTH FAILED: User not authenticated");
