@@ -24,7 +24,7 @@ public class GetOrdersQueryHandler : IRequestHandler<GetOrdersQuery, List<OrderD
         
         var logContext = new Dictionary<string, object>
         {
-            { "StatusFilter", request.Status ?? "None" }
+            { "StatusFilter", request.Status }
         };
         
         using var logScope = _logger.BeginScope(logContext);
