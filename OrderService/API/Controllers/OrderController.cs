@@ -40,14 +40,13 @@ public class OrderController : ControllerBase
 
         // Map OrderRequest to OrderCreatedCommand using AutoMapper
         var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
-        command.OrderId = "ORDER-" + Guid.NewGuid();
-            
+
         // Send command through mediator to handler
-        await _mediator.Send(command);
+        var orderId = await _mediator.Send(command);
 
         _logger.LogInformation("Order command processed successfully");
 
-        var response = new OrderResponse(command.OrderId, Constants.Pending, "Order command published for processing");
+        var response = new OrderResponse(orderId, Constants.Pending, "Order command published for processing");
         return Accepted(response);
     }
     

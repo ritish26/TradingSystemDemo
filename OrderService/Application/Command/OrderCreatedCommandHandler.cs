@@ -1,10 +1,10 @@
-using MediatR;
 using OrderService.Application.Factories;
 using OrderService.Application.Interfaces;
+using MediatR;
 
 namespace OrderService.Application.Command;
 
-public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, Unit>
+public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, string>
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IOrderFactory _orderFactory;
@@ -18,13 +18,15 @@ public class OrderCreatedCommandHandler : IRequestHandler<OrderCreatedCommand, U
         _orderFactory = orderFactory;
     }
 
-    public async Task<Unit> Handle(OrderCreatedCommand request, CancellationToken cancellationToken)
+    public async Task<string> Handle(OrderCreatedCommand request, CancellationToken cancellationToken)
     {
+        request.OrderId = "ORDER-" + Guid.NewGuid();
+
         var order = _orderFactory.CreateOrder(request);
         var outbox = _orderFactory.CreateOutboxMessage(request);
 
         await _orderRepository.CreateOrderWithOutboxAsync(order, outbox);
 
-        return Unit.Value;
+        return request.OrderId;
     }
 }
