@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Shared.Application.Interfaces;
 
 namespace Shared.API.Middleware;
@@ -6,14 +8,16 @@ namespace Shared.API.Middleware;
 public class IdempotencyMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly IIdempotencyStore _store; 
-    
-    public IdempotencyMiddleware(IIdempotencyStore store, RequestDelegate next)
+    private readonly IIdempotencyStore _store;
+    private readonly ILogger<IdempotencyMiddleware> _logger;
+
+    public IdempotencyMiddleware(IIdempotencyStore store, RequestDelegate next, ILogger<IdempotencyMiddleware> logger)
     {
         _store = store;
         _next = next;
+        _logger = logger;
     }
-    
+
     public async Task Invoke(HttpContext context)
     {
         if (!context.Items.TryGetValue("IdempotencyKey", out var keyObj))
@@ -22,29 +26,54 @@ public class IdempotencyMiddleware
             return;
         }
 
-        var idempotencyKey = keyObj.ToString();
+        var idempotencyKey = keyObj?.ToString();
 
-        if (idempotencyKey != null && _store.TryGet(idempotencyKey, out var cachedResponse))
+        // SECURITY: Authentication & Authorization have already run.
+        // Idempotency key includes userId, preventing cross-user cache hits.
+        if (!string.IsNullOrEmpty(idempotencyKey) && _store.TryGet(idempotencyKey, out var cachedData))
         {
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = 200;
-            await context.Response.WriteAsync(cachedResponse);
-            return;
+            try
+            {
+                var cached = JsonDocument.Parse(cachedData).RootElement;
+                int statusCode = cached.GetProperty("StatusCode").GetInt32();
+                string body = cached.GetProperty("Body").GetString() ?? "";
+
+                context.Response.ContentType = "application/json";
+                context.Response.StatusCode = statusCode;
+                await context.Response.WriteAsync(body);
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Idempotency cache parse failed: {Error}", ex.Message);
+            }
         }
 
         var originalBody = context.Response.Body;
-
         using var memStream = new MemoryStream();
         context.Response.Body = memStream;
 
-        await _next(context);
+        try
+        {
+            await _next(context);
 
-        memStream.Seek(0, SeekOrigin.Begin);
-        var responseBody = await new StreamReader(memStream).ReadToEndAsync();
+            memStream.Seek(0, SeekOrigin.Begin);
+            var responseBody = await new StreamReader(memStream).ReadToEndAsync();
 
-        if (idempotencyKey != null) _store.Save(idempotencyKey, responseBody);
+            // Cache only successful responses (2xx status codes)
+            if (!string.IsNullOrEmpty(idempotencyKey) && context.Response.StatusCode >= 200 && context.Response.StatusCode < 300)
+            {
+                var cacheEntry = new { StatusCode = context.Response.StatusCode, Body = responseBody };
+                var cacheJson = JsonSerializer.Serialize(cacheEntry);
+                _store.Save(idempotencyKey, cacheJson);
+            }
 
-        memStream.Seek(0, SeekOrigin.Begin);
-        await memStream.CopyToAsync(originalBody);
+            memStream.Seek(0, SeekOrigin.Begin);
+            await memStream.CopyToAsync(originalBody);
+        }
+        finally
+        {
+            context.Response.Body = originalBody;
+        }
     }
 }

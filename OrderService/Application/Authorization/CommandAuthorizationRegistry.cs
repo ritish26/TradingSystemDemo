@@ -14,33 +14,20 @@ public class CommandAuthorizationRegistry : ICommandAuthorizationRegistry
     {
         _logger = logger;
 
-        _logger.LogInformation("[Registry] Building rules...");
-
         Register<OrderCreatedCommand>(new CommandAuthRule
         {
-            Roles    = ["Admin"],
             Policies = ["CanCreateOrder"]
         });
-        
+
         Register<GetOrdersQuery>(new CommandAuthRule
         {
-            Roles    = ["ReadAdmin"],
             Policies = ["CanViewOrder"]
         });
-
-        _logger.LogInformation("[Registry] Registered {Count} rules", _rules.Count);
     }
 
     private void Register<TCommand>(CommandAuthRule rule)
         => _rules[typeof(TCommand)] = rule;
 
     public CommandAuthRule? GetRule(Type commandType)
-    {
-        var rule = _rules.TryGetValue(commandType, out var r) ? r : null;
-
-        _logger.LogInformation("[Registry] GetRule for {Command} → {Found}",
-            commandType.Name, rule is not null ? "found" : "not found");
-
-        return rule;
-    }
+        => _rules.TryGetValue(commandType, out var rule) ? rule : null;
 }
