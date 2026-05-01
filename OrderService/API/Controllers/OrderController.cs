@@ -5,6 +5,7 @@ using OrderService.API.Controllers.Contracts;
 using OrderService.Application.Command;
 using OrderService.Application.Queries;
 using Shared.Domain.Constants;
+using Shared.Domain.Exceptions;
 
 namespace OrderService.API.Controllers;
 
@@ -36,18 +37,41 @@ public class OrderController : ControllerBase
     {
         // Correlation ID is automatically set by the CorrelationIdMiddleware
         // And available in all logs via Serilog LogContext
-        _logger.LogInformation("CreateOrder request initiated for symbol {Symbol}", orderRequest.OrderType);
+        _logger.LogInformation("[Controller] CreateOrder request started");
+        _logger.LogInformation("[Controller] OrderType: {OrderType}, ClientId: {ClientId}, InstrumentSymbol: {Symbol}",
+            orderRequest.OrderType, orderRequest.ClientId, orderRequest.InstrumentSymbol);
 
         // Map OrderRequest to OrderCreatedCommand using AutoMapper
         var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
+        _logger.LogInformation("[Controller] Command mapped successfully");
 
         // Send command through mediator to handler
-        var orderId = await _mediator.Send(command);
+        try
+        {
+            _logger.LogInformation("[Controller] Sending command to MediatR pipeline...");
+            var orderId = await _mediator.Send(command);
 
-        _logger.LogInformation("Order command processed successfully");
+            _logger.LogInformation("[Controller] ✅ Order command processed successfully. OrderId: {OrderId}", orderId);
 
-        var response = new OrderResponse(orderId, Constants.Pending, "Order command published for processing");
-        return Accepted(response);
+            var response = new OrderResponse(orderId, Constants.Pending, "Order command published for processing");
+            _logger.LogInformation("[Controller] Returning 202 Accepted with OrderId: {OrderId}", orderId);
+            return Accepted(response);
+        }
+        catch (ForbiddenException ex)
+        {
+            _logger.LogError("[Controller] ❌ Authorization failed: {Error}", ex.Message);
+            throw;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogError("[Controller] ❌ Authentication failed: {Error}", ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("[Controller] ❌ Unexpected error: {Error}", ex.Message);
+            throw;
+        }
     }
     
     

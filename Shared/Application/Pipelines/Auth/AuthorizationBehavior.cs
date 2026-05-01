@@ -33,66 +33,34 @@ public class AuthorizationBehavior<TRequest, TResponse>
         CancellationToken cancellationToken)
     {
         var requestType = typeof(TRequest);
-
         var rule = _registry.GetRule(requestType);
 
         if (rule == null)
         {
-            _logger.LogWarning("RULE NOT FOUND for {Request}", requestType.FullName);
             return await next();
-        }
-
-        _logger.LogInformation("Rule FOUND");
-        
-        if (rule.Roles != null && rule.Roles.Length > 0)
-        {
-            _logger.LogWarning("Required Roles: {Roles}", string.Join(",", rule.Roles));
-        }
-        else
-        {
-            _logger.LogWarning("No role requirement");
         }
 
         if (!_currentUser.IsAuthenticated)
         {
-            _logger.LogError("AUTH FAILED: User not authenticated");
+            _logger.LogError("Unauthorized: User not authenticated for {Command}", requestType.Name);
             throw new UnauthorizedAccessException();
         }
-        
-        if (rule.Roles?.Length > 0)
-        {
-            foreach (var role in rule.Roles)
-            {
-                var hasRole = _currentUser.IsInRole(role);
 
-                _logger.LogInformation(
-                    "Role Check → Required: {Role}, HasRole: {Result}",
-                    role,
-                    hasRole);
-            }
-
-            var isAuthorized = rule.Roles.Any(r => _currentUser.IsInRole(r));
-
-            if (!isAuthorized)
-            {
-                _logger.LogError("AUTH FAILED: Role mismatch");
-                throw new ForbiddenException();
-            }
-        }
-        
+        // Check policies if required
         if (rule.Policies?.Length > 0)
         {
             foreach (var policy in rule.Policies)
             {
-                var result = await _authService
-                    .AuthorizeAsync(_currentUser.Principal, policy);
+                var result = await _authService.AuthorizeAsync(_currentUser.Principal, policy);
 
                 if (!result.Succeeded)
                 {
+                    _logger.LogError("Forbidden: Policy '{Policy}' check failed for {Command}", policy, requestType.Name);
                     throw new ForbiddenException();
                 }
             }
         }
+
         return await next();
     }
 }

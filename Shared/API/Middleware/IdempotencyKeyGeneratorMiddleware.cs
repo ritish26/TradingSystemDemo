@@ -1,15 +1,18 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Shared.API.Middleware;
 
 public class IdempotencyKeyGeneratorMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<IdempotencyKeyGeneratorMiddleware> _logger;
 
-    public IdempotencyKeyGeneratorMiddleware(RequestDelegate next)
+    public IdempotencyKeyGeneratorMiddleware(RequestDelegate next, ILogger<IdempotencyKeyGeneratorMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task Invoke(HttpContext context)
@@ -17,7 +20,8 @@ public class IdempotencyKeyGeneratorMiddleware
         // If client already sent key → use it
         if (context.Request.Headers.ContainsKey("Infrastructure-Key"))
         {
-            context.Items["IdempotencyKey"] = context.Request.Headers["Infrastructure-Key"].ToString();
+            var clientKey = context.Request.Headers["Infrastructure-Key"].ToString();
+            context.Items["IdempotencyKey"] = clientKey;
             await _next(context);
             return;
         }
@@ -28,15 +32,15 @@ public class IdempotencyKeyGeneratorMiddleware
         var body = await new StreamReader(context.Request.Body).ReadToEndAsync();
         context.Request.Body.Position = 0;
 
-        // Generate deterministic key (clientId + instrumentId)
-        var key = GenerateKey(body);
-
+        // Generate deterministic key (userId + clientId + instrumentId)
+        var userId = context.User?.FindFirst("sub")?.Value ?? "anonymous";
+        var key = GenerateKey(body, userId);
         context.Items["IdempotencyKey"] = key;
 
         await _next(context);
     }
 
-    private static string GenerateKey(string body)
+    private static string GenerateKey(string body, string userId)
     {
         string? clientId = null;
         string? instrumentId = null;
@@ -66,15 +70,15 @@ public class IdempotencyKeyGeneratorMiddleware
                     }
                 }
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
-                Console.WriteLine($"[IdempotencyKeyGenerator] JSON parse failed: {ex.Message}");
+                // Continue with unknown values if JSON parsing fails
             }
         }
 
         clientId ??= "unknown-client";
         instrumentId ??= "unknown-instrument";
 
-        return $"idmp-{clientId}-{instrumentId}";
+        return $"idmp-{userId}-{clientId}-{instrumentId}";
     }
 }
