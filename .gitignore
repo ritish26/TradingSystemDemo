@@ -3,4 +3,5 @@ obj/
 .idea/
 *.user
 *.suo
-.vs/
+.vs/vault-init-keys.txt
+vault-init-keys.txt

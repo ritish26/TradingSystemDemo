@@ -13,13 +13,16 @@ public static class AuthServiceExtensions
     {
         services.Configure<JwtSettings>(
             configuration.GetSection("JwtSettings"));
+        services.Configure<VaultSettings>(
+            configuration.GetSection("Vault"));
 
-        services.AddSingleton<IRsaKeyProvider, RsaKeyProvider>();
+        services.AddHttpClient<IVaultTokenProvider, VaultTokenProvider>();
+        services.AddScoped<ITransitSigner, VaultTransitSigner>();
 
         services.AddSingleton<IUserClaimsProvider, AdminClaimsProvider>();
         services.AddSingleton<IUserClaimsProvider, DefaultClaimsProvider>();
 
-        services.AddSingleton<ITokenService, TokenService>();
+        services.AddScoped<ITokenService, TokenService>();
 
         services.AddSingleton<InMemoryUserRepository>();
         services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
