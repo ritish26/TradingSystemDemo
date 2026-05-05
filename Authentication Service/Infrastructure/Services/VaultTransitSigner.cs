@@ -45,12 +45,11 @@ public sealed class VaultTransitSigner : ITransitSigner
 
         var signature = jsonDoc.RootElement.GetProperty("data").GetProperty("signature").GetString()
                         ?? throw new InvalidOperationException("Failed to extract signature from Vault response");
-        var keyVersion = jsonDoc.RootElement.GetProperty("data").GetProperty("key_version").GetInt32();
 
         var strippedSignature = StripVaultPrefix(signature);
         var base64UrlSignature = ConvertToBase64Url(strippedSignature);
 
-        return new SigningResult(base64UrlSignature, keyVersion);
+        return new SigningResult(base64UrlSignature);
     }
 
     public async Task<int> GetCurrentKeyVersionAsync()
