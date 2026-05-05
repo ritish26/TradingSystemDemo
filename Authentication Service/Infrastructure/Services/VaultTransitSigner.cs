@@ -48,8 +48,9 @@ public sealed class VaultTransitSigner : ITransitSigner
         var keyVersion = jsonDoc.RootElement.GetProperty("data").GetProperty("key_version").GetInt32();
 
         var strippedSignature = StripVaultPrefix(signature);
+        var base64UrlSignature = ConvertToBase64Url(strippedSignature);
 
-        return new SigningResult(strippedSignature, keyVersion);
+        return new SigningResult(base64UrlSignature, keyVersion);
     }
 
     public async Task<int> GetCurrentKeyVersionAsync()
@@ -81,5 +82,10 @@ public sealed class VaultTransitSigner : ITransitSigner
             throw new InvalidOperationException("Invalid signature format");
 
         return signature[(colonIndex + 1)..];
+    }
+
+    private static string ConvertToBase64Url(string base64)
+    {
+        return base64.TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 }

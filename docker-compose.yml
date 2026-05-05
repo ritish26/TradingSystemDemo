@@ -32,8 +32,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       Vault__Address: http://vault:8200
       Vault__KeyName: jwt-signing-key
-      Vault__RoleId: jwt-role-id
-      Vault__SecretId: jwt-secret-id
+      Vault__RoleId: e606624c-b7c7-e316-a49c-f4c01accc6b3
+      Vault__SecretId: 8a71b886-d832-69e2-9a9f-5bf8c567fbba  
     ports:
       - "5006:80"
     networks:

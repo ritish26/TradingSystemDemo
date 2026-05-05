@@ -83,7 +83,7 @@ echo "AppRole enabled."
 curl -s \
   --header "X-Vault-Token: $VAULT_TOKEN" \
   --request PUT \
-  --data '{"policy":"path \"transit/sign/jwt-signing-key\" { capabilities = [\"create\",\"update\"] }"}' \
+  --data '{"policy":"path \"transit/sign/jwt-signing-key\" { capabilities = [\"create\",\"update\"] } path \"transit/keys/jwt-signing-key\" { capabilities = [\"read\"] }"}' \
   "$VAULT_ADDR/v1/sys/policies/acl/auth-service-policy" > /dev/null
 echo "Auth Service policy created."
 
