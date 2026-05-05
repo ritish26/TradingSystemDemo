@@ -13,9 +13,6 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
         <ProjectReference Include="..\Shared\Shared.csproj" />
-        <None Include="Security\private.pem">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
 
     <ItemGroup>

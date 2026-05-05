@@ -6,7 +6,7 @@ namespace Authentication_Service.Infrastructure.Claims;
 
 public sealed class DefaultClaimsProvider : IUserClaimsProvider
 {
-    public bool CanHandle(string role) => true;
+    public bool CanHandle(string role) => role == "ReadAdmin";
 
     public IEnumerable<Claim> GetClaims(AuthenticatedUser user)
     {
