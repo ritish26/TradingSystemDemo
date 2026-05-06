@@ -49,7 +49,7 @@ public sealed class TokenService : ITokenService
         {
             alg = "RS256",
             typ = "JWT",
-            kid = keyVersion
+            kid = keyVersion.ToString()
         };
 
         return JsonSerializer.Serialize(header);

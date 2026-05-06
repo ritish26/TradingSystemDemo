@@ -1,10 +1,11 @@
-using System.Security.Cryptography;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OrderService.Infrastructure.Extensions;
 using OrderService.Infrastructure.Persistence;
+using OrderService.Infrastructure.Services;
 using Serilog;
 using Shared.API.Middleware;
 using Shared.Application.Interfaces;
@@ -43,24 +44,13 @@ builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
 builder.Services.AddSharedInfrastructure();
 
 // Facade: Register all Order Service dependencies using extension method
-builder.Services.AddOrderServiceDependencies();
+builder.Services.AddOrderServiceDependencies(builder.Configuration);
 
 // Pipeline behaviors — order matters, auth runs first, then validation
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-// JWT Auth — make sure this is configured
-var publicKeyPath = builder.Configuration["JwtSettings:PublicKeyPath"];
-
-var publicKeyPem = File.ReadAllText(
-    Path.Combine(AppContext.BaseDirectory, publicKeyPath!));
-
-var rsa = RSA.Create();
-
-rsa.ImportFromPem(publicKeyPem.ToCharArray());
-
-var rsaSecurityKey = new RsaSecurityKey(rsa);
-
+// JWT Auth — key resolution via Vault Transit
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -71,13 +61,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
             ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = rsaSecurityKey
+            ValidateIssuerSigningKey = true
         };
     });
 
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<JwtKeyResolver>((options, resolver) =>
+        options.TokenValidationParameters.IssuerSigningKeyResolver = resolver.ResolveKey);
+
 builder.Services.AddAuthorization(options =>
 {
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
     options.AddPolicy("CanCreateOrder", policy =>
         policy.RequireClaim("permission", "order:create"));
     options.AddPolicy("CanViewOrder", policy =>

@@ -1,4 +1,4 @@
-namespace Authentication_Service.Application.Interfaces;
+namespace Shared.Application.Interfaces;
 
 public interface IVaultTokenProvider
 {

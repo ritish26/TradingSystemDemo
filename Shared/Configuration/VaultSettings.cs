@@ -1,4 +1,4 @@
-namespace Authentication_Service.Configuration;
+namespace Shared.Configuration;
 
 public class VaultSettings
 {
