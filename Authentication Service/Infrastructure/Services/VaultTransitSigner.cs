@@ -1,8 +1,9 @@
 using System.Text.Json;
 using Authentication_Service.Application.Interfaces;
 using Authentication_Service.Application.Models;
-using Authentication_Service.Configuration;
 using Microsoft.Extensions.Options;
+using Shared.Application.Interfaces;
+using Shared.Configuration;
 
 namespace Authentication_Service.Infrastructure.Services;
 
@@ -27,7 +28,13 @@ public sealed class VaultTransitSigner : ITransitSigner
         var token = await _tokenProvider.GetTokenAsync();
         var url = $"{_vaultSettings.Address}/v1/transit/sign/{_vaultSettings.KeyName}";
 
-        var payload = new { input = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(input)) };
+        var payload = new
+        {
+            input = Convert.ToBase64String(
+                System.Text.Encoding.UTF8.GetBytes(input)),
+            signature_algorithm = "pkcs1v15"
+        };
+
         var json = JsonSerializer.Serialize(payload);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 

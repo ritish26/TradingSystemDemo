@@ -6,9 +6,12 @@ using OrderService.Application.Factories;
 using OrderService.Application.Interfaces;
 using OrderService.Infrastructure.Repositories;
 using OrderService.Infrastructure.Service;
+using OrderService.Infrastructure.Services;
 using OrderService.Outbox;
 using Shared.Application.Interfaces;
+using Shared.Configuration;
 using Shared.Infrastructure.Messaging;
+using Shared.Infrastructure.Services;
 
 namespace OrderService.Infrastructure.Extensions;
 
@@ -27,8 +30,14 @@ public static class ServiceCollectionExtensions
     /// Registers all Order Service dependencies.
     /// This is a Facade method that hides the complexity of multiple service registrations.
     /// </summary>
-    public static IServiceCollection AddOrderServiceDependencies(this IServiceCollection services)
+    public static IServiceCollection AddOrderServiceDependencies(this IServiceCollection services, IConfiguration configuration)
     {
+        // Vault Configuration
+        services.Configure<VaultSettings>(configuration.GetSection("Vault"));
+        services.AddHttpClient<IVaultTokenProvider, VaultTokenProvider>();
+        services.AddHttpClient<IPublicKeyProvider, VaultPublicKeyProvider>();
+        services.AddSingleton<JwtKeyResolver>();
+
         // Repository Layer
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
