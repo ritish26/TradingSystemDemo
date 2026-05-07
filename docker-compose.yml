@@ -13,6 +13,12 @@ services:
       - vault-data:/vault/data
       - ./vault-config.hcl:/vault/config/vault.hcl
     command: sh -c "chmod 777 /vault/data 2>/dev/null; vault server -config=/vault/config/vault.hcl"
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     cap_add:
       - IPC_LOCK
     networks:
@@ -32,8 +38,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       Vault__Address: http://vault:8200
       Vault__KeyName: jwt-signing-key
-      Vault__RoleId: e606624c-b7c7-e316-a49c-f4c01accc6b3
-      Vault__SecretId: 8a71b886-d832-69e2-9a9f-5bf8c567fbba  
+      Vault__RoleId: f683fbf1-5aa8-9438-d49b-dbd22a758c62
+      Vault__SecretId: cf13dc9c-39e2-cffb-f95e-5f6d3240244e
     ports:
       - "5006:80"
     networks:
@@ -74,6 +80,8 @@ services:
     image: trading-orderservice
     container_name: trading-orderservice
     depends_on:
+      vault:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
@@ -81,6 +89,10 @@ services:
       RabbitMQ__Port: 5672
       RabbitMQ__UserName: guest
       RabbitMQ__Password: guest
+      Vault__Address: http://trading-vault:8200
+      Vault__KeyName: jwt-signing-key
+      Vault__RoleId: 2882b9b3-2d7b-6f75-c16b-7c6d5a454fc9
+      Vault__SecretId: 2fed6548-cb7a-e4e1-f226-865c57f1eb16
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
     ports:

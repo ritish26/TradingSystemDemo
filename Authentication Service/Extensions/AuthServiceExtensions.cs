@@ -2,6 +2,9 @@ using Authentication_Service.Application.Interfaces;
 using Authentication_Service.Configuration;
 using Authentication_Service.Infrastructure.Claims;
 using Authentication_Service.Infrastructure.Services;
+using Shared.Application.Interfaces;
+using Shared.Configuration;
+using Shared.Infrastructure.Services;
 
 namespace Authentication_Service.Extensions;
 

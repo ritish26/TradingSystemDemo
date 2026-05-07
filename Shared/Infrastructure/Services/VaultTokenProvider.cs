@@ -1,9 +1,9 @@
 using System.Text.Json;
-using Authentication_Service.Application.Interfaces;
-using Authentication_Service.Configuration;
 using Microsoft.Extensions.Options;
+using Shared.Application.Interfaces;
+using Shared.Configuration;
 
-namespace Authentication_Service.Infrastructure.Services;
+namespace Shared.Infrastructure.Services;
 
 public sealed class VaultTokenProvider : IVaultTokenProvider
 {
