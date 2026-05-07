@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Service HLD — Vault Integration</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #1a1d24;
+    --border: rgba(255,255,255,0.07);
+    --border-bright: rgba(255,255,255,0.15);
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #374151;
+
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --blue-glow: rgba(59,130,246,0.3);
+    --teal: #14b8a6;
+    --teal-dim: rgba(20,184,166,0.12);
+    --coral: #f97316;
+    --coral-dim: rgba(249,115,22,0.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.12);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --gray-dim: rgba(255,255,255,0.04);
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  header {
+    margin-bottom: 48px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .header-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    background: var(--blue-dim);
+    border: 1px solid rgba(59,130,246,0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  h1 {
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h1 span {
+    color: var(--blue);
+  }
+
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Step rows */
+  .step {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    position: relative;
+  }
+
+  /* Step number column */
+  .step-num {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    flex-shrink: 0;
+  }
+
+  .step-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border-bright);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    margin-top: 20px;
+  }
+
+  .step-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  .step:last-child .step-line { display: none; }
+
+  /* Step content */
+  .step-content {
+    flex: 1;
+    padding: 12px 0 24px 16px;
+  }
+
+  /* Single component */
+  .component {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .component::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 10px 0 0 10px;
+    background: var(--accent, var(--blue));
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+
+  .component:hover {
+    border-color: var(--border-bright);
+    transform: translateX(4px);
+  }
+
+  .component:hover::before { opacity: 1; }
+
+  .component.active {
+    border-color: var(--accent, var(--blue));
+    background: var(--surface2);
+  }
+
+  .component.active::before { opacity: 1; }
+
+  .comp-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .comp-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent-dim, var(--blue-dim));
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .comp-meta { flex: 1; min-width: 0; }
+
+  .comp-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .comp-type {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent, var(--blue));
+    margin-top: 2px;
+  }
+
+  .comp-chevron {
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .component.active .comp-chevron { transform: rotate(90deg); }
+
+  .comp-desc {
+    padding: 0 16px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .component.active .comp-desc {
+    padding: 0 16px 14px;
+    max-height: 200px;
+  }
+
+  .comp-desc-inner {
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .comp-desc-inner strong {
+    color: var(--accent, var(--blue));
+    font-weight: 600;
+  }
+
+  /* Multi-component rows (side by side) */
+  .comp-row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .comp-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .comp-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  /* Section label */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* Pipeline container */
+  .pipeline-box {
+    border: 1px dashed var(--border-bright);
+    border-radius: 12px;
+    padding: 16px;
+    background: var(--gray-dim);
+  }
+
+  .pipeline-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+  }
+
+  /* Arrow connector */
+  .arrow-down {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    color: var(--text-dim);
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+
+  .arrow-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: -8px;
+    margin-bottom: 4px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .legend-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  /* color utility classes */
+  .blue  { --accent: var(--blue);   --accent-dim: var(--blue-dim); }
+  .teal  { --accent: var(--teal);   --accent-dim: var(--teal-dim); }
+  .coral { --accent: var(--coral);  --accent-dim: var(--coral-dim); }
+  .purple{ --accent: var(--purple); --accent-dim: var(--purple-dim); }
+  .green { --accent: var(--green);  --accent-dim: var(--green-dim); }
+
+  @media (max-width: 600px) {
+    .comp-row.cols-2, .comp-row.cols-3 { grid-template-columns: 1fr; }
+    header { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <div class="header-badge">feature/integrate-hashicorp-vault</div>
+      <h1>Order Service <span>HLD</span></h1>
+      <p class="subtitle">// Vault Transit Engine Integration — click any component</p>
+    </div>
+  </header>
+
+  <div class="flow">
+
+    <!-- STEP 1: Client -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">1</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">entry point</div>
+        <div class="component blue" onclick="toggle(this)">
+          <div class="comp-header">
+            <div class="comp-icon">🌐</div>
+            <div class="comp-meta">
+              <div class="comp-name">Client</div>
+              <div class="comp-type">POST /api/order/create</div>
+            </div>
+            <div class="comp-chevron">▶</div>
+          </div>
+          <div class="comp-desc">
+            <div class="comp-desc-inner">
+              Sends <strong>POST /api/order/create</strong> with a Bearer JWT token in the Authorization header.<br><br>
+              JWT contains: <strong>kid</strong> (key version), role, permission claims, expiry, issuer, audience.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: UseAuthentication -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">2</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">asp.net middleware</div>
+        <div class="component blue" onclick="toggle(this)">
+          <div class="comp-header">
+            <div class="comp-icon">🔐</div>
+            <div class="comp-meta">
+              <div class="comp-name">UseAuthentication()</div>
+              <div class="comp-type">JWT Bearer middleware</div>
+            </div>
+            <div class="comp-chevron">▶</div>
+          </div>
+          <div class="comp-desc">
+            <div class="comp-desc-inner">
+              Intercepts every incoming request. Reads <strong>kid</strong> from JWT header.<br><br>
+              Calls <strong>IssuerSigningKeyResolver</strong> (wired to JwtKeyResolver at startup via AddOptions) to get the matching public key for verification.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Vault Key Resolution -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">3</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">vault key resolution</div>
+        <div class="comp-row cols-3" style="margin-bottom:10px">
+          <div class="component blue" onclick="toggle(this)">
+            <div class="comp-header">
+              <div class="comp-icon">🔑</div>
+              <div class="comp-meta">
+                <div class="comp-name">JwtKeyResolver</div>
+                <div class="comp-type">IssuerSigningKeyResolver</div>
+              </div>
+              <div class="comp-chevron">▶</div>
+            </div>
+            <div class="comp-desc">
+              <div class="comp-desc-inner">
+                Wired into JWT middleware via <strong>AddOptions&lt;JwtBearerOptions&gt;</strong>.<br><br>
+                Receives <strong>kid</strong> from middleware. Calls <strong>IPublicKeyProvider.GetPublicKeyAsync(kid)</strong>. Returns <strong>IEnumerable&lt;SecurityKey&gt;</strong> to middleware.
+              </div>
+            </div>
+          </div>
+
+          <div class="component blue" onclick="toggle(this)">
+            <div class="comp-header">
+              <div class="comp-icon">🏛️</div>
+              <div class="comp-meta">
+                <div class="comp-name">VaultPublicKeyProvider</div>
+                <div class="comp-type">IPublicKeyProvider</div>
+              </div>
+              <div class="comp-chevron">▶</div>
+            </div>
+            <div class="comp-desc">
+              <div class="comp-desc-inner">
+                Calls <strong>GET /v1/transit/keys/jwt-signing-key</strong> with X-Vault-Token header.<br><br>
+                Parses all key versions from response. Picks version matching <strong>kid</strong>. Imports PEM using <strong>ImportSubjectPublicKeyInfo</strong>. Returns <strong>RsaSecurityKey</strong> with KeyId set.
+              </div>
+            </div>
+          </div>
+
+          <div class="component blue" onclick="toggle(this)">
+            <div class="comp-header">
+              <div class="comp-icon">🎫</div>
+              <div class="comp-meta">
+                <div class="comp-name">VaultTokenProvider</div>
+                <div class="comp-type">IVaultTokenProvider</div>
+              </div>
+              <div class="comp-chevron">▶</div>
+            </div>
+            <div class="comp-desc">
+              <div class="comp-desc-inner">
+                Authenticates Order Service to Vault using <strong>AppRole</strong> (RoleId + SecretId from config).<br><br>
+                POST <strong>/v1/auth/approle/login</strong> → returns <strong>client_token</strong> (1hr TTL). Used as X-Vault-Token in all Vault API calls.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vault box -->
+        <div class="component teal" onclick="toggle(this)">
+          <div class="comp-header">
+            <div class="comp-icon">🔒</div>
+            <div class="comp-meta">
+              <div class="comp-name">Vault Transit Engine</div>
+              <div class="comp-type">GET /v1/transit/keys/jwt-signing-key</div>
+            </div>
+            <div class="comp-chevron">▶</div>
+          </div>
+          <div class="comp-desc">
+            <div class="comp-desc-inner">
+              Returns <strong>all public key versions</strong> in one response: { "1": {public_key}, "2": {public_key}, "3": {public_key} }<br><br>
+              Order Service policy: <strong>read-only</strong> on transit/keys. Cannot sign, cannot access private keys. Private key never leaves Vault — ever.<br><br>
+              Key auto-rotates every <strong>30 days</strong> (auto_rotate_period=720h). Old versions kept until all tokens expire.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: JWT Verification -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">4</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">signature verification</div>
+        <div class="component blue" onclick="toggle(this)">
+          <div class="comp-header">
+            <div class="comp-icon">✅</div>
+            <div class="comp-meta">
+              <div class="comp-name">JWT Verification</div>
+              <div class="comp-type">RSA.Verify + claims validation</div>
+            </div>
+            <div class="comp-chevron">▶</div>
+          </div>
+          <div class="comp-desc">
+            <div class="comp-desc-inner">
+              ASP.NET middleware verifies using <strong>RS256 + PKCS1v15</strong> (must match Vault signing algorithm).<br><br>
+              Checks: <strong>signature</strong> (RSA verify with public key) → <strong>exp</strong> (not expired) → <strong>iss</strong> = "IdentityService" → <strong>aud</strong> = "MyAPI"<br><br>
+              On success: sets <strong>HttpContext.User</strong> with all claims. Request proceeds to controller.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Controller -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">5</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">api layer</div>
+        <div class="component coral" onclick="toggle(this)">
+          <div class="comp-header">
+            <div class="comp-icon">🎯</div>
+            <div class="comp-meta">
+              <div class="comp-name">OrderController</div>
+              <div class="comp-type">POST /api/order/create</div>
+            </div>
+            <div class="comp-chevron">▶</div>
+          </div>
+          <div class="comp-desc">
+            <div class="comp-desc-inner">
+              No <strong>[Authorize]</strong> attribute — authorization happens inside MediatR pipeline instead.<br><br>
+              Maps <strong>OrderRequest → OrderCreatedCommand</strong> via AutoMapper. Sends command via <strong>IMediator.Send()</strong>. Returns 202 Accepted with OrderId.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: MediatR Pipeline -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">6</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">mediatr pipeline</div>
+        <div class="pipeline-box">
+          <div class="pipeline-label">// behaviors run in order</div>
+          <div class="comp-row cols-2">
+            <div class="component coral" onclick="toggle(this)">
+              <div class="comp-header">
+                <div class="comp-icon">🛡️</div>
+                <div class="comp-meta">
+                  <div class="comp-name">AuthorizationBehavior</div>
+                  <div class="comp-type">IPipelineBehavior — runs first</div>
+                </div>
+                <div class="comp-chevron">▶</div>
+              </div>
+              <div class="comp-desc">
+                <div class="comp-desc-inner">
+                  Checks <strong>ICommandAuthorizationRegistry</strong> for the rule registered against this command.<br><br>
+                  Calls <strong>ICurrentUserService.IsAuthenticated</strong> — reads from HttpContext.User.<br><br>
+                  Calls <strong>IAuthorizationService.AuthorizeAsync</strong> with policy <strong>"CanCreateOrder"</strong> → RequireClaim("permission", "order:create").<br><br>
+                  Fail → throws <strong>ForbiddenException</strong> (403).
+                </div>
+              </div>
+            </div>
+
+            <div class="component coral" onclick="toggle(this)">
+              <div class="comp-header">
+                <div class="comp-icon">✔️</div>
+                <div class="comp-meta">
+                  <div class="comp-name">ValidationBehavior</div>
+                  <div class="comp-type">IPipelineBehavior — runs second</div>
+                </div>
+                <div class="comp-chevron">▶</div>
+              </div>
+              <div class="comp-desc">
+                <div class="comp-desc-inner">
+                  Runs <strong>FluentValidation</strong> on <strong>OrderCreatedCommand</strong>.<br><br>
+                  Validates: OrderType, ClientId, InstrumentSymbol, Quantity, Price.<br><br>
+                  Fail → throws <strong>ValidationException</strong> (400).
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:10px">
+            <div class="component purple" onclick="toggle(this)">
+              <div class="comp-header">
+                <div class="comp-icon">👤</div>
+                <div class="comp-meta">
+                  <div class="comp-name">ICurrentUserService</div>
+                  <div class="comp-type">reads HttpContext.User</div>
+                </div>
+                <div class="comp-chevron">▶</div>
+              </div>
+              <div class="comp-desc">
+                <div class="comp-desc-inner">
+                  Used by <strong>AuthorizationBehavior</strong> to read the authenticated user.<br><br>
+                  <strong>IsAuthenticated</strong> → HttpContext.User.Identity.IsAuthenticated<br>
+                  <strong>Principal</strong> → HttpContext.User (ClaimsPrincipal)<br><br>
+                  Set by UseAuthentication() middleware after JWT verification succeeds.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 7: Command Handler -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">7</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">application layer</div>
+        <div class="component coral" onclick="toggle(this)">
+          <div class="comp-header">
+            <div class="comp-icon">⚙️</div>
+            <div class="comp-meta">
+              <div class="comp-name">OrderCreatedCommandHandler</div>
+              <div class="comp-type">IRequestHandler&lt;OrderCreatedCommand&gt;</div>
+            </div>
+            <div class="comp-chevron">▶</div>
+          </div>
+          <div class="comp-desc">
+            <div class="comp-desc-inner">
+              Creates <strong>Order</strong> entity via <strong>IOrderFactory</strong>.<br><br>
+              Creates <strong>OutboxMessage</strong> with serialized OrderPlacedEvent payload.<br><br>
+              Calls <strong>IOrderRepository.CreateOrderWithOutboxAsync</strong> — saves both in a <strong>single PostgreSQL transaction</strong> (transactional outbox pattern).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 8: Infrastructure -->
+    <div class="step">
+      <div class="step-num">
+        <div class="step-badge">8</div>
+        <div class="step-line"></div>
+      </div>
+      <div class="step-content">
+        <div class="section-label">infrastructure layer</div>
+        <div class="comp-row cols-2">
+          <div class="component green" onclick="toggle(this)">
+            <div class="comp-header">
+              <div class="comp-icon">🗄️</div>
+              <div class="comp-meta">
+                <div class="comp-name">PostgreSQL</div>
+                <div class="comp-type">Orders + OutboxMessages tables</div>
+              </div>
+              <div class="comp-chevron">▶</div>
+            </div>
+            <div class="comp-desc">
+              <div class="comp-desc-inner">
+                Stores <strong>Orders</strong> (status: PENDING → EXECUTED/REJECTED) and <strong>OutboxMessages</strong> in a single atomic transaction.<br><br>
+                Transactional outbox ensures no message is lost even if RabbitMQ is down at publish time.
+              </div>
+            </div>
+          </div>
+
+          <div class="component green" onclick="toggle(this)">
+            <div class="comp-header">
+              <div class="comp-icon">🐇</div>
+              <div class="comp-meta">
+                <div class="comp-name">RabbitMQ</div>
+                <div class="comp-type">OrderPlacedEvent publisher</div>
+              </div>
+              <div class="comp-chevron">▶</div>
+            </div>
+            <div class="comp-desc">
+              <div class="comp-desc-inner">
+                <strong>OutboxBackgroundService</strong> polls for pending OutboxMessages every few seconds.<br><br>
+                Publishes <strong>OrderPlacedEvent</strong> to RabbitMQ. Marks outbox message as processed.<br><br>
+                ProcessingService consumes this event to execute/reject the order.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end flow -->
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-title">// component types</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Authentication / Vault</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Vault Transit Engine</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--coral)"></div>Order Service logic</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Shared infrastructure</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Storage / messaging</div>
+  </div>
+
+</div>
+
+<script>
+function toggle(el) {
+  const isActive = el.classList.contains('active');
+  // close all in same row first
+  const row = el.closest('.comp-row') || el.parentElement;
+  row.querySelectorAll('.component').forEach(c => c.classList.remove('active'));
+  if (!isActive) el.classList.add('active');
+}
+</script>
+</body>
+</html>
