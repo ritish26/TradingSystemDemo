@@ -35,41 +35,28 @@ public class OrderController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateOrder([FromBody] OrderRequest orderRequest)
     {
-        // Correlation ID is automatically set by the CorrelationIdMiddleware
-        // And available in all logs via Serilog LogContext
-        _logger.LogInformation("[Controller] CreateOrder request started");
-        _logger.LogInformation("[Controller] OrderType: {OrderType}, ClientId: {ClientId}, InstrumentSymbol: {Symbol}",
-            orderRequest.OrderType, orderRequest.ClientId, orderRequest.InstrumentSymbol);
-
-        // Map OrderRequest to OrderCreatedCommand using AutoMapper
         var command = _mapper.Map<OrderCreatedCommand>(orderRequest);
-        _logger.LogInformation("[Controller] Command mapped successfully");
+        command.OrderId = "ORDER-" + Guid.NewGuid();
 
-        // Send command through mediator to handler
         try
         {
-            _logger.LogInformation("[Controller] Sending command to MediatR pipeline...");
             var orderId = await _mediator.Send(command);
-
-            _logger.LogInformation("[Controller] ✅ Order command processed successfully. OrderId: {OrderId}", orderId);
-
             var response = new OrderResponse(orderId, Constants.Pending, "Order command published for processing");
-            _logger.LogInformation("[Controller] Returning 202 Accepted with OrderId: {OrderId}", orderId);
             return Accepted(response);
         }
         catch (ForbiddenException ex)
         {
-            _logger.LogError("[Controller] ❌ Authorization failed: {Error}", ex.Message);
+            _logger.LogError(ex, "Authorization failed");
             throw;
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogError("[Controller] ❌ Authentication failed: {Error}", ex.Message);
+            _logger.LogError(ex, "Authentication failed");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError("[Controller] ❌ Unexpected error: {Error}", ex.Message);
+            _logger.LogError(ex, "Unexpected error creating order");
             throw;
         }
     }
@@ -92,13 +79,9 @@ public class OrderController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Health check endpoint
-    /// </summary>
     [HttpGet("health")]
     public IActionResult Health()
     {
-        _logger.LogInformation("Order Services health check performed");
         return Ok(new { status = "Order Services is healthy" });
     }
 }

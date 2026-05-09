@@ -34,6 +34,9 @@ public class AppDbContext : DbContext
                 .HasDefaultValue(OrderStatus.Pending);
             entity.Property(e => e.Price)
                 .HasColumnType("decimal(18,2)");
+            entity.Property(e => e.xmin)
+                .HasColumnName("xmin")
+                .IsRowVersion();
             entity.HasIndex(e => e.Status)
                 .HasDatabaseName("IX_Orders_Status");
         });

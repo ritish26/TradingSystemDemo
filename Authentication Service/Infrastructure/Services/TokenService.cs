@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 using Authentication_Service.Application.Interfaces;
 using Authentication_Service.Application.Models;
@@ -23,14 +22,14 @@ public sealed class TokenService : ITokenService
         _claimsProviders = claimsProviders;
     }
 
-    public string GenerateToken(AuthenticatedUser user)
+    public async Task<string> GenerateTokenAsync(AuthenticatedUser user)
     {
         var claimsProvider = _claimsProviders.FirstOrDefault(p => p.CanHandle(user.Role))
                              ?? throw new InvalidOperationException(
                                  $"No claims provider registered for role '{user.Role}'");
         var claims = claimsProvider.GetClaims(user).ToList();
 
-        var keyVersion = _transitSigner.GetCurrentKeyVersionAsync().GetAwaiter().GetResult();
+        var keyVersion = await _transitSigner.GetCurrentKeyVersionAsync();
         var header = BuildHeader(keyVersion);
         var payload = BuildPayload(claims);
 
@@ -38,7 +37,7 @@ public sealed class TokenService : ITokenService
         var payloadB64 = Base64UrlEncode(payload);
         var signingInput = $"{headerB64}.{payloadB64}";
 
-        var signingResult = _transitSigner.SignAsync(signingInput).GetAwaiter().GetResult();
+        var signingResult = await _transitSigner.SignAsync(signingInput);
 
         return $"{signingInput}.{signingResult.Signature}";
     }

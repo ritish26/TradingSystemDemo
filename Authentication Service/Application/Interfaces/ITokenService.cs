@@ -4,5 +4,5 @@ namespace Authentication_Service.Application.Interfaces;
 
 public interface ITokenService
 {
-    string GenerateToken(AuthenticatedUser user);
+    Task<string> GenerateTokenAsync(AuthenticatedUser user);
 }

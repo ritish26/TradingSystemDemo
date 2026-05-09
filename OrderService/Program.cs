@@ -40,6 +40,9 @@ builder.Services.AddHttpContextAccessor();
 // Idempotency store for caching duplicate request responses
 builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
 
+// Rate limiting: Redis-based for horizontal scaling
+builder.Services.AddRedisRateLimiting(builder.Configuration);
+
 // Register shared infrastructure (Configuration, Database, Messaging, ExceptionHandling)
 builder.Services.AddSharedInfrastructure();
 
@@ -93,6 +96,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCorrelationId();
+app.UseRateLimiting();
 
 app.UseRouting();
 app.UseAuthentication();

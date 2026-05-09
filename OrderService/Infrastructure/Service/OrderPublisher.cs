@@ -54,13 +54,12 @@ public class RabbitMqEventPublisher : IEventPublisher
                 body: body
             );
 
-            _logger.LogInformation($"OrderPlacedEvent published for Order {orderEvent.OrderId}");
             channel.Close();
             channel.Dispose();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error publishing OrderPlacedEvent");
+            _logger.LogError(ex, "Error publishing OrderPlacedEvent for Order {OrderId}", orderEvent.OrderId);
             throw;
         }
         return Task.CompletedTask;

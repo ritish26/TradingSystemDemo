@@ -8,12 +8,9 @@ namespace OrderService.Application.Authorization;
 public class CommandAuthorizationRegistry : ICommandAuthorizationRegistry
 {
     private readonly Dictionary<Type, CommandAuthRule> _rules = new();
-    private readonly ILogger<CommandAuthorizationRegistry> _logger;
 
-    public CommandAuthorizationRegistry(ILogger<CommandAuthorizationRegistry> logger)
+    public CommandAuthorizationRegistry()
     {
-        _logger = logger;
-
         Register<OrderCreatedCommand>(new CommandAuthRule
         {
             Policies = ["CanCreateOrder"]

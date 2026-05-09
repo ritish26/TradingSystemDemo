@@ -13,6 +13,7 @@ public static class ExceptionHandlingExtensions
     {
         services.AddSingleton<IExceptionResponseStrategy, UnauthorizedAccessExceptionStrategy>();
         services.AddSingleton<IExceptionResponseStrategy, ForbiddenExceptionStrategy>();
+        services.AddSingleton<IExceptionResponseStrategy, ConflictExceptionStrategy>();
         services.AddSingleton<ExceptionHandler>();
 
         return services;

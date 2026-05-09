@@ -1,6 +1,7 @@
 using Authentication_Service.Application.Interfaces;
 using Authentication_Service.Configuration;
 using Authentication_Service.Infrastructure.Claims;
+using Authentication_Service.Infrastructure.RateLimiting;
 using Authentication_Service.Infrastructure.Services;
 using Shared.Application.Interfaces;
 using Shared.Configuration;
@@ -29,6 +30,8 @@ public static class AuthServiceExtensions
 
         services.AddSingleton<InMemoryUserRepository>();
         services.AddSingleton<IUserAuthenticationService, UserAuthenticationService>();
+
+        services.AddSingleton<IWhitelistService, RedisWhitelistService>();
 
         return services;
     }
