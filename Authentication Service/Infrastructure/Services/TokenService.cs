@@ -43,6 +43,7 @@ public sealed class TokenService : ITokenService
         }
         catch
         {
+            // ignored
         }
 
         if (cachedToken != null)
@@ -70,6 +71,7 @@ public sealed class TokenService : ITokenService
         }
         catch
         {
+            // ignored
         }
 
         return token;

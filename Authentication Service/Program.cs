@@ -8,7 +8,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-// Rate limiting: Redis-based for brute force protection across instances
 builder.Services.AddRedisRateLimiting(builder.Configuration);
 
 builder.Services.AddAuthenticationServices(builder.Configuration);
@@ -29,7 +28,7 @@ using (var scope = app.Services.CreateScope())
     var whitelistService = scope.ServiceProvider.GetRequiredService<IWhitelistService>();
     var initialIps = builder.Configuration
         .GetSection("RateLimiting:InitialWhitelist")
-        .Get<string[]>() ?? Array.Empty<string>();
+        .Get<string[]>() ?? [];
 
     foreach (var ip in initialIps)
     {
