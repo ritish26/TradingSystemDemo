@@ -11,7 +11,7 @@ public class AuthController : ControllerBase
     private readonly IUserAuthenticationService _authService;
     private readonly ITokenService _tokenService;
     private readonly ILogger<AuthController> _logger;
-
+    
     public AuthController(
         IUserAuthenticationService authService,
         ITokenService tokenService,
@@ -23,7 +23,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public IActionResult Login(LoginRequest request)
+    public async Task<IActionResult> Login(LoginRequest request)
     {
         var user = _authService.Authenticate(request.Username, request.Password);
 
@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid credentials." });
         }
 
-        var token = _tokenService.GenerateToken(user);
+        var token = await _tokenService.GenerateTokenAsync(user);
         _logger.LogInformation("User authenticated successfully: {Username}", request.Username);
 
         return Ok(new AuthResponse { Token = token });

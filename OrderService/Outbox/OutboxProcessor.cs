@@ -1,13 +1,15 @@
 using System.Text.Json;
+using OrderService.Application.Converters;
 using OrderService.Application.Interfaces;
+using OrderService.Domain.Events;
 using OrderService.Domain.ValueObjects;
-using Shared.Domain.Events;
 
 namespace OrderService.Outbox;
 
 /// <summary>
-/// Processes pending outbox messages and publishes domain events.
-/// Depends on abstractions (IEventPublisher, IOutboxRepository) for testability and flexibility.
+/// Processes pending outbox messages containing domain events and publishes integration events.
+/// Translation layer: converts domain events (OrderCreated) to integration events (OrderPlacedEvent).
+/// DDD: domain events stay internal, integration events cross service boundaries.
 /// </summary>
 public class OutboxProcessor
 {
@@ -33,9 +35,12 @@ public class OutboxProcessor
         {
             try
             {
-                var eventObj = JsonSerializer.Deserialize<OrderPlacedEvent>(msg.Payload);
-
-                await _publisher.PublishOrderPlacedEventAsync(eventObj);
+                if (msg.EventType == nameof(OrderCreated))
+                {
+                    var domainEvent = JsonSerializer.Deserialize<OrderCreated>(msg.Payload);
+                    var integrationEvent = DomainEventToIntegrationEventConverter.Convert(domainEvent);
+                    await _publisher.PublishOrderPlacedEventAsync(integrationEvent);
+                }
 
                 msg.Status = OrderStatus.Processed;
                 msg.ProcessedAt = DateTime.UtcNow;

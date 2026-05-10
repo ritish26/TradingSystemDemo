@@ -33,13 +33,18 @@ services:
     depends_on:
       vault:
         condition: service_started
+      redis:
+        condition: service_healthy
     environment:
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
       Vault__Address: http://vault:8200
       Vault__KeyName: jwt-signing-key
-      Vault__RoleId: f683fbf1-5aa8-9438-d49b-dbd22a758c62
-      Vault__SecretId: cf13dc9c-39e2-cffb-f95e-5f6d3240244e
+      Vault__RoleId: a3c027d5-2c7c-dd28-53fc-e8f0edef6c5c
+      Vault__SecretId: afeeb4f0-6f73-aab2-84e8-7d1272c4394a
+      ConnectionStrings__Redis: redis:6379
+      RateLimiting__MaxRequests: "5"
+      RateLimiting__WindowSeconds: "300"
     ports:
       - "5006:80"
     networks:
@@ -55,6 +60,22 @@ services:
       SEQ_FIRSTRUN_NOAUTHENTICATION: true   
     networks:
       - trading-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trading-network
+    volumes:
+      - redis-data:/data
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -84,6 +105,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       RabbitMQ__HostName: rabbitmq
       RabbitMQ__Port: 5672
@@ -91,8 +114,11 @@ services:
       RabbitMQ__Password: guest
       Vault__Address: http://trading-vault:8200
       Vault__KeyName: jwt-signing-key
-      Vault__RoleId: 2882b9b3-2d7b-6f75-c16b-7c6d5a454fc9
-      Vault__SecretId: 2fed6548-cb7a-e4e1-f226-865c57f1eb16
+      Vault__RoleId: 28c74a6c-b9bf-c9f3-b0e9-6e01d7864d3f
+      Vault__SecretId: df424098-0f6b-7f59-3c81-fbb61326438e
+      ConnectionStrings__Redis: redis:6379
+      RateLimiting__MaxRequests: "100"
+      RateLimiting__WindowSeconds: "60"
       ASPNETCORE_URLS: http://+:80
       ASPNETCORE_ENVIRONMENT: Development
     ports:
@@ -154,3 +180,4 @@ networks:
   
 volumes:
     vault-data:
+    redis-data:

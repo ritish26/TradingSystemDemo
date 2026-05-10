@@ -20,6 +20,13 @@ public class IdempotencyMiddleware
 
     public async Task Invoke(HttpContext context)
     {
+        // Skip idempotency caching for GET requests (read-only operations)
+        if (context.Request.Method == "GET")
+        {
+            await _next(context);
+            return;
+        }
+
         if (!context.Items.TryGetValue("IdempotencyKey", out var keyObj))
         {
             await _next(context);

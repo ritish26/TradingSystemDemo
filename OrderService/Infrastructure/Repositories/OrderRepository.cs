@@ -39,12 +39,12 @@ public class OrderRepository : IOrderRepository
             throw;
         }
     }
-    
+
     public async Task<List<Order>> GetByStatusAsync(string status)
     {
         return await _context.Orders
             .Where(o => o.Status == status)
             .ToListAsync();
     }
-    
+
 }

@@ -14,4 +14,5 @@ public class Order
     public decimal Price { get; set; }
     public DateTime CreatedAt { get; set; }
     public string Status { get; set; }
+    public uint xmin { get; set; }
 }
