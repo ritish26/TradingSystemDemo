@@ -11,7 +11,7 @@ public class AuthController : ControllerBase
     private readonly IUserAuthenticationService _authService;
     private readonly ITokenService _tokenService;
     private readonly ILogger<AuthController> _logger;
-    /// <inheritdoc />
+    
     public AuthController(
         IUserAuthenticationService authService,
         ITokenService tokenService,
