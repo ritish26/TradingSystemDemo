@@ -11,15 +11,18 @@ public sealed class TokenService : ITokenService
     private readonly JwtSettings _jwtSettings;
     private readonly ITransitSigner _transitSigner;
     private readonly IEnumerable<IUserClaimsProvider> _claimsProviders;
+    private readonly ITokenCacheService _tokenCacheService;
 
     public TokenService(
         IOptions<JwtSettings> jwtSettings,
         ITransitSigner transitSigner,
-        IEnumerable<IUserClaimsProvider> claimsProviders)
+        IEnumerable<IUserClaimsProvider> claimsProviders,
+        ITokenCacheService tokenCacheService)
     {
         _jwtSettings = jwtSettings.Value;
         _transitSigner = transitSigner;
         _claimsProviders = claimsProviders;
+        _tokenCacheService = tokenCacheService;
     }
 
     public async Task<string> GenerateTokenAsync(AuthenticatedUser user)
@@ -29,6 +32,23 @@ public sealed class TokenService : ITokenService
                                  $"No claims provider registered for role '{user.Role}'");
         var claims = claimsProvider.GetClaims(user).ToList();
 
+        // Generate cache key from user identity and claims
+        var cacheKey = TokenCacheKeyGenerator.GenerateKey(user.Username, user.Role, claims);
+
+        // Check Redis cache (fail-open: if Redis is down, we just generate fresh token)
+        string? cachedToken = null;
+        try
+        {
+            cachedToken = await _tokenCacheService.GetCachedTokenAsync(cacheKey);
+        }
+        catch
+        {
+        }
+
+        if (cachedToken != null)
+            return cachedToken;
+
+        // Cache miss — generate fresh JWT from Vault
         var keyVersion = await _transitSigner.GetCurrentKeyVersionAsync();
         var header = BuildHeader(keyVersion);
         var payload = BuildPayload(claims);
@@ -38,8 +58,21 @@ public sealed class TokenService : ITokenService
         var signingInput = $"{headerB64}.{payloadB64}";
 
         var signingResult = await _transitSigner.SignAsync(signingInput);
+        var token = $"{signingInput}.{signingResult.Signature}";
 
-        return $"{signingInput}.{signingResult.Signature}";
+        // Store in cache (fail-open: if Redis is down, we still return valid token)
+        try
+        {
+            await _tokenCacheService.SetCachedTokenAsync(
+                cacheKey,
+                token,
+                _jwtSettings.TokenExpiryMinutes * 60);
+        }
+        catch
+        {
+        }
+
+        return token;
     }
 
     private string BuildHeader(int keyVersion)

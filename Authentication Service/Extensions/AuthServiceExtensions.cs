@@ -33,6 +33,8 @@ public static class AuthServiceExtensions
 
         services.AddSingleton<IWhitelistService, RedisWhitelistService>();
 
+        services.AddSingleton<ITokenCacheService, RedisTokenCacheService>();
+
         return services;
     }
 }
